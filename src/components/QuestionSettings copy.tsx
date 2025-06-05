@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { MdArrowRight } from "react-icons/md";
-import type { TreeMenuItem } from "./TreeMenu";
+import React, { useState } from "react";
 import TreeMenu from "./TreeMenu";
+import type { TreeMenuItem } from "./TreeMenu";
 
 // Main App component
 const QuestionSettingsV2 = () => {
@@ -150,50 +149,21 @@ const QuestionSettingsV2 = () => {
     initialCourseData as TreeMenuItem[]
   );
 
-  // Function to update an item's property (isChecked or score) with parent-child logic
+  // Function to update an item's property (isChecked or score)
   const updateItem = (
     id: string,
     key: string,
     value: any,
-    currentData: TreeMenuItem[],
-    parentChecked?: boolean
+    currentData: TreeMenuItem[]
   ): TreeMenuItem[] => {
     return currentData.map((item: TreeMenuItem) => {
       if (item.id === id) {
-        // If checking/unchecking a parent, update all children recursively
-        let updatedItem = { ...item, [key]: value };
-        if (key === "isChecked" && item.children) {
-          updatedItem.children = updateItemForChildren(item.children, value);
-        }
-        return updatedItem;
+        return { ...item, [key]: value };
       } else if (item.children) {
-        // Recursively update children
-        const updatedChildren = updateItem(id, key, value, item.children);
-        // After updating children, update parent checked state if needed
-        let isChecked = item.isChecked;
-        if (key === "isChecked") {
-          const allChecked = updatedChildren.every((child) => child.isChecked);
-          const someChecked = updatedChildren.some((child) => child.isChecked);
-          isChecked = allChecked ? true : someChecked ? false : false;
-        }
-        return { ...item, children: updatedChildren, isChecked };
+        return { ...item, children: updateItem(id, key, value, item.children) };
       }
       return item;
     });
-  };
-
-  // Helper to update all children recursively
-  const updateItemForChildren = (
-    children: TreeMenuItem[],
-    checked: boolean
-  ): TreeMenuItem[] => {
-    return children.map((child) => ({
-      ...child,
-      isChecked: checked,
-      children: child.children
-        ? updateItemForChildren(child.children, checked)
-        : child.children,
-    }));
   };
 
   // Handle item property change (checkbox or score)
@@ -211,34 +181,45 @@ const QuestionSettingsV2 = () => {
   ) => {
     return (
       <div
-        className={`flex items-center py-3 gap-4 pr-10 border-b cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
+        className={`flex items-center py-3 pr-4 border-b cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
           level === 0 ? "bg-gray-50" : ""
         }`}
         style={{ paddingLeft: `${level * 1.5 + 1}rem` }}
         onClick={toggleExpand}
       >
-        {item.children && item.children.length > 0 && (
-          <MdArrowRight
-            className={`transition-transform flex-shrink-0 w-6 h-6 duration-200 ${
-              isExpanded ? "rotate-90" : ""
-            }`}
-          />
-        )}
-        <div className="flex items-center  flex-grow gap-1.5">
-          <input
-            type="checkbox"
-            className="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500  flex-shrink-0"
-            checked={item.isChecked}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              onItemChange(item.id, "isChecked", e.target.checked);
-            }}
-          />
-          <span className="flex-grow text-sm sm:text-base text-gray-800 truncate">
-            {item.label}
-          </span>
+        <div className="flex-shrink-0 w-6">
+          {item.children && item.children.length > 0 && (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`transition-transform duration-200 ${
+                isExpanded ? "rotate-90" : ""
+              }`}
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          )}
         </div>
-        <div className="flex items-center ml-auto flex-shrink-0">
+        <input
+          type="checkbox"
+          className="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500 mr-3 flex-shrink-0"
+          checked={item.isChecked}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            onItemChange(item.id, "isChecked", e.target.checked);
+          }}
+        />
+        <span className="flex-grow text-sm sm:text-base text-gray-800 truncate">
+          {item.label}
+        </span>
+        <div className="flex items-center ml-auto pr-4 flex-shrink-0">
           {item.score !== null && item.score !== undefined && (
             <input
               type="number"
