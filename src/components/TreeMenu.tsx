@@ -19,7 +19,10 @@ interface TreeMenuProps {
     level: number,
     isExpanded: boolean,
     toggleExpand: () => void,
-    onItemChange: (id: string, key: string, value: any) => void
+    onItemChange: (id: string, key: string, value: any) => void,
+    parentNumQuestion?: number,
+    isLastChild?: boolean,
+    hasParent?: boolean
   ) => React.ReactNode;
 }
 
@@ -28,7 +31,10 @@ const DefaultTreeMenuItem = (
   level: number,
   isExpanded: boolean,
   toggleExpand: () => void,
-  onItemChange: (id: string, key: string, value: any) => void
+  onItemChange: (id: string, key: string, value: any) => void,
+  parentNumQuestion?: number,
+  isLastChild?: boolean,
+  hasParent?: boolean
 ) => {
   return (
     <div
@@ -105,7 +111,10 @@ const TreeMenuNode: React.FC<{
     level: number,
     isExpanded: boolean,
     toggleExpand: () => void,
-    onItemChange: (id: string, key: string, value: any) => void
+    onItemChange: (id: string, key: string, value: any) => void,
+    parentNumQuestion?: number,
+    isLastChild?: boolean,
+    hasParent?: boolean
   ) => React.ReactNode;
   isLast?: boolean;
 }> = ({ item, level, onItemChange, renderItem, isLast }) => {
@@ -114,9 +123,10 @@ const TreeMenuNode: React.FC<{
   const [maxHeight, setMaxHeight] = useState("0px");
 
   const toggleExpand = () => {
-    if (item.children && item.children.length > 0) {
-      setIsExpanded((prev) => !prev);
-    }
+    setIsExpanded((prev) => !prev);
+    // if (item.children && item.children.length > 0) {
+    //   setIsExpanded((prev) => !prev);
+    // }
   };
 
   useEffect(() => {
@@ -148,7 +158,7 @@ const TreeMenuNode: React.FC<{
 
   return (
     <div>
-      {renderItem(item, level, isExpanded, toggleExpand, onItemChange)}
+      {renderItem(item, level, isExpanded, toggleExpand, onItemChange, undefined, isLast, level > 0)}
       <div
         ref={contentRef}
         className="overflow-hidden  transition-all duration-300 ease-in-out"

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { MdArrowRight } from "react-icons/md";
 import type { TreeMenuItem } from "./TreeMenu";
 import TreeMenu from "./TreeMenu";
+import { TiLockClosed, TiLockOpen } from "react-icons/ti";
+import { FaCircleInfo } from "react-icons/fa6";
+import { Tooltip } from "@heroui/react";
 
 function allocateNumQuestions(
   data: TreeMenuItem[],
@@ -23,7 +26,7 @@ function allocateNumQuestions(
   });
 }
 
-const QuestionSettingsV2 = ({ maxNumQuestion = 100 }) => {
+const QuestionSettings = ({ maxNumQuestions = 100 }) => {
   const initialCourseData = [
     {
       id: "toeic",
@@ -164,27 +167,25 @@ const QuestionSettingsV2 = ({ maxNumQuestion = 100 }) => {
     },
   ];
 
-  const [courseData, setCourseData] = useState<TreeMenuItem[]>(
-    allocateNumQuestions(initialCourseData as TreeMenuItem[], maxNumQuestion)
-  );
-
-  const [lastChangedId, setLastChangedId] = useState<string | null>(null);
+  const [courseData, setCourseData] = useState<TreeMenuItem[]>([]);
 
   useEffect(() => {
-    if (lastChangedId) {
-      const timer = setTimeout(() => setLastChangedId(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [lastChangedId]);
+    const allocatedData = allocateNumQuestions(
+      initialCourseData,
+      maxNumQuestions
+    );
+    setCourseData(allocatedData);
+  }, [maxNumQuestions]);
+
+  const [lastChangedId, setLastChangedId] = useState<string | null>(null);
 
   const updateItem = (
     id: string,
     key: string,
     value: any,
-    currentData: TreeMenuItem[],
-    parentChecked?: boolean
+    currentData: TreeMenuItem[]
   ): TreeMenuItem[] => {
-    return currentData.map((item: TreeMenuItem) => {
+    return currentData.map((item) => {
       if (item.id === id) {
         let updatedItem = { ...item, [key]: value };
         if (key === "isChecked" && item.children) {
@@ -229,50 +230,13 @@ const QuestionSettingsV2 = ({ maxNumQuestion = 100 }) => {
     isExpanded: boolean,
     toggleExpand: () => void,
     onItemChange: (id: string, key: string, value: any) => void,
-    parentNumQuestion?: number
+    parentNumQuestion?: number,
+    isLastChild?: boolean,
+    hasParent?: boolean
   ) => {
-    // let showSumMismatchWarning = false;
-
-    // if (
-    //   item.numQuestion !== null &&
-    //   item.numQuestion !== undefined &&
-    //   lastChangedId !== null
-    // ) {
-    //   function findParentAndSiblings(
-    //     nodes: TreeMenuItem[],
-    //     childId: string
-    //   ): { parent: TreeMenuItem | null; siblings: TreeMenuItem[] } | null {
-    //     for (const node of nodes) {
-    //       if (node.children && node.children.some((c) => c.id === childId)) {
-    //         return { parent: node, siblings: node.children };
-    //       } else if (node.children) {
-    //         const found = findParentAndSiblings(node.children, childId);
-    //         if (found) return found;
-    //       }
-    //     }
-    //     return null;
-    //   }
-
-    //   const found = findParentAndSiblings(courseData, lastChangedId);
-    //   if (
-    //     found &&
-    //     found.parent &&
-    //     found.parent.numQuestion !== null &&
-    //     found.parent.numQuestion !== undefined
-    //   ) {
-    //     const siblings = found.siblings;
-    //     const parentNum = found.parent.numQuestion;
-    //     const siblingsSum = siblings.reduce(
-    //       (sum: number, c: TreeMenuItem) => sum + (c.numQuestion || 0),
-    //       0
-    //     );
-    //     showSumMismatchWarning =
-    //       siblings.some((s) => s.id === item.id) && siblingsSum !== parentNum;
-    //   }
-    // }
     let showSumMismatchWarning = false;
+    let showRootSumMismatchWarning = false;
 
-    // Show warning ONLY on the field the user just changed
     if (item.id === lastChangedId) {
       function findParentAndSiblings(
         nodes: TreeMenuItem[],
@@ -290,98 +254,158 @@ const QuestionSettingsV2 = ({ maxNumQuestion = 100 }) => {
       }
 
       const found = findParentAndSiblings(courseData, lastChangedId);
-      if (
-        found &&
-        found.parent &&
-        found.parent.numQuestion !== null &&
-        found.parent.numQuestion !== undefined
-      ) {
+      if (found && found.parent?.numQuestion != null) {
         const siblingsSum = found.siblings.reduce(
-          (sum: number, c: TreeMenuItem) => sum + (c.numQuestion || 0),
+          (sum, c) => sum + (c.numQuestion || 0),
           0
         );
         showSumMismatchWarning = siblingsSum !== found.parent.numQuestion;
       }
+
+      const isRootLevel = !courseData.some((node) =>
+        node.children?.some((c) => c.id === item.id)
+      );
+      if (isRootLevel) {
+        const totalSum = courseData.reduce(
+          (sum, node) => sum + (node.numQuestion || 0),
+          0
+        );
+        showRootSumMismatchWarning = totalSum !== maxNumQuestions;
+      }
     }
+
+    // Function to determine if we need vertical line for ancestor levels
+    const getAncestorLines = (currentLevel: number, isLastAtLevel: boolean) => {
+      const lines = [];
+
+      // Draw vertical lines for all ancestor levels
+      for (let i = 1; i <= currentLevel; i++) {
+        const shouldDrawLine = i < currentLevel || !isLastAtLevel;
+        lines.push(
+          <div
+            key={`vertical-${i}`}
+            className="absolute border-l-2 border-dotted border-gray-400"
+            style={{
+              left: `${(i - 1) * 1.5 + 1.75}rem`,
+              top: 0,
+              bottom: shouldDrawLine ? 0 : "50%",
+              width: "0px",
+            }}
+          />
+        );
+      }
+
+      return lines;
+    };
 
     return (
       <div
-        className={`flex items-center py-3 gap-4 pr-10 border-b cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
-          level === 0 ? "bg-gray-50" : ""
+        className={`relative flex items-center py-3 gap-4 pr-10 cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
+          level === 0 ? "bg-gray-50 border-b" : ""
         }`}
         style={{ paddingLeft: `${level * 1.5 + 1}rem` }}
         onClick={toggleExpand}
       >
-        {item.children && item.children.length > 0 && (
-          <MdArrowRight
-            className={`transition-transform flex-shrink-0 w-6 h-6 duration-200 ${
-              isExpanded ? "rotate-90" : ""
-            }`}
+        {/* Vertical dotted lines for all ancestor levels */}
+        {level > 0 && getAncestorLines(level, isLastChild || false)}
+
+        {/* Horizontal dotted connector */}
+        {level > 0 && (
+          <div
+            className="absolute border-t-2 border-dotted border-gray-400"
+            style={{
+              left: `${(level - 1) * 1.5 + 1.75}rem`,
+              top: "50%",
+              width: "1.25rem",
+              height: "0px",
+            }}
           />
         )}
-        <div className="flex items-center  flex-grow gap-1.5">
+
+        <MdArrowRight
+          className={`transition-transform flex-shrink-0 w-6 h-6 duration-200 ${
+            item.children && item.children.length > 0 ? "" : "invisible"
+          } ${isExpanded ? "rotate-90" : ""}`}
+        />
+
+        <div className="flex items-center flex-grow gap-1.5">
           <input
             type="checkbox"
-            className="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500 flex-shrink-0"
+            className="form-checkbox h-4 w-4 text-orange-500 rounded focus:ring-orange-500 flex-shrink-0"
             checked={item.isChecked}
             onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              onItemChange(item.id, "isChecked", e.target.checked);
-            }}
+            onChange={(e) =>
+              onItemChange(item.id, "isChecked", e.target.checked)
+            }
           />
           <span className="flex-grow text-sm sm:text-base text-gray-800 truncate">
             {item.label}
           </span>
         </div>
         <div className="flex items-center ml-auto flex-shrink-0 relative">
-          {item.numQuestion !== null && item.numQuestion !== undefined && (
-            <div className="relative flex items-center">
+          {item.numQuestion != null && (
+            <div className="flex items-center gap-2">
+              {(showSumMismatchWarning || showRootSumMismatchWarning) && (
+                <Tooltip
+                  content={
+                    <div className="max-w-lg">
+                      Currently, there are only {item.numQuestion} questions
+                      available in the selected chapter.
+                      <br />
+                      You may consider selecting additional chapters, reducing
+                      the number of questions, or creating your own questions in
+                      the "Edit Details" step.
+                    </div>
+                  }
+                >
+                  <FaCircleInfo size={18} className="text-red-500" />
+                </Tooltip>
+              )}
               <input
                 type="number"
-                className={`w-16 text-center border rounded-md px-1 py-0.5 text-gray-700 font-medium text-sm sm:text-base mr-2 ${
+                className={`w-16 text-center border-1 focus:outline-none rounded-md px-1 h-10 text-gray-700 font-medium text-sm mr-2 ${
                   item.isLocked
                     ? "bg-gray-100 cursor-not-allowed"
-                    : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    : "bg-white border-gray-300 "
+                } ${
+                  showSumMismatchWarning || showRootSumMismatchWarning
+                    ? "border-red-500 ring-red-500"
+                    : ""
                 }`}
                 value={item.numQuestion}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
-                  const newnumQuestion = parseInt(e.target.value, 10);
+                  const newVal = parseInt(e.target.value, 10);
                   onItemChange(
                     item.id,
                     "numQuestion",
-                    isNaN(newnumQuestion) ? null : newnumQuestion
+                    isNaN(newVal) ? null : newVal
                   );
                 }}
                 readOnly={item.isLocked}
               />
-              {showSumMismatchWarning && (
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center px-2 py-0.5 rounded border border-red-400 bg-red-50 text-red-700 text-sm font-semibold ml-1 gap-1 animate-pulse z-10">
-                  Sum ≠ parent
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold ml-1">
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <circle cx="12" cy="16" r="1" />
-                    </svg>
-                  </span>
-                </span>
-              )}
             </div>
           )}
           {item.isLocked ? (
-            <span className="ml-1">🔒</span>
+            <span
+              className="ml-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                onItemChange(item.id, "isLocked", !item.isLocked);
+              }}
+            >
+              <TiLockClosed size={18} className="text-black" />
+            </span>
           ) : (
-            <span className="ml-1">🔓</span>
+            <span
+              className="ml-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                onItemChange(item.id, "isLocked", !item.isLocked);
+              }}
+            >
+              <TiLockOpen size={18} className="text-black" />
+            </span>
           )}
         </div>
       </div>
@@ -401,4 +425,4 @@ const QuestionSettingsV2 = ({ maxNumQuestion = 100 }) => {
   );
 };
 
-export default QuestionSettingsV2;
+export default QuestionSettings;
