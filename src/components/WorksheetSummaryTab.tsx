@@ -2,6 +2,15 @@ import {DndContext, DragOverlay, closestCenter} from "@dnd-kit/core";
 import {SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
 import SortableRow from "./SortableRow";
 import TableRowOverlay from "./TableRowOverlay";
+import type {Question} from "../types";
+interface WorksheetSummaryTabProps {
+	selectedQuestions: Question[];
+	onDragStart: (event: any) => void;
+	onDragEnd: (event: any) => void;
+	onDragCancel: () => void;
+	sensors: any;
+	activeQuestion?: Question | null;
+}
 
 const WorksheetSummaryTab = ({
 	selectedQuestions,
@@ -10,7 +19,7 @@ const WorksheetSummaryTab = ({
 	onDragEnd,
 	onDragCancel,
 	sensors,
-}) => {
+}: WorksheetSummaryTabProps) => {
 	return (
 		<DndContext
 			sensors={sensors}

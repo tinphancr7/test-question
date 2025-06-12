@@ -6,7 +6,6 @@ interface NewQuestionCardProps {
 	question: Question;
 	index: number;
 	onAddQuestion: (question: Question) => void;
-	// isSelected prop không còn cần thiết cho luồng này
 }
 
 export default function NewQuestionCard({
@@ -24,7 +23,6 @@ export default function NewQuestionCard({
 					</span>
 				</div>
 				<div className="flex items-center space-x-2">
-					{/* Nút Delete (có thể thêm chức năng sau nếu cần) - giữ nguyên để phù hợp hình ảnh, nhưng không có chức năng trong luồng này */}
 					<button className="text-gray-400 hover:text-red-600">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"

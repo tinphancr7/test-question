@@ -5,7 +5,6 @@ import {FaRegTrashAlt} from "react-icons/fa";
 import {MdDragIndicator} from "react-icons/md";
 import {Question} from "../types";
 
-// Reusable Badge Component
 const Badge = ({children}: {children: React.ReactNode}) => (
 	<span className="inline-flex w-fit items-center rounded-md bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/10">
 		{children}

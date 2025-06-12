@@ -4,6 +4,19 @@ import {closestCenter, DndContext, DragOverlay} from "@dnd-kit/core";
 import ProblemCardOverlay from "./ProblemCardOverlay";
 import {RiArrowLeftSLine, RiArrowRightSLine} from "react-icons/ri";
 import {useState} from "react";
+import type {Question} from "../types";
+
+interface RightPanelProps {
+	selectedQuestions: Question[];
+	removeSelectedQuestion: (id: string) => void;
+	onDragStart: (event: any) => void;
+	onDragEnd: (event: any) => void;
+	onDragCancel: () => void;
+	sensors: any;
+	activeQuestion?: Question | null;
+	onPrevStep: () => void;
+}
+
 export default function RightPanel({
 	selectedQuestions,
 	removeSelectedQuestion,
@@ -12,7 +25,8 @@ export default function RightPanel({
 	onDragCancel,
 	sensors,
 	activeQuestion,
-}) {
+	onPrevStep,
+}: RightPanelProps) {
 	const [showAnswer, setShowAnswer] = useState(true);
 
 	return (
@@ -74,7 +88,10 @@ export default function RightPanel({
 			</div>
 
 			<div className="p-4 border-t border-gray-200 flex justify-between gap-4 items-center bg-[#1D1D1D]">
-				<button className="px-5 flex-1 h-14 bg-white flex items-center justify-center gap-1 py-2 border text-[#FAAD14] border-[#FAAD14] rounded-md  hover:bg-gray-50">
+				<button
+					onClick={onPrevStep}
+					className="px-5 flex-1 h-14 bg-white flex items-center justify-center gap-1 py-2 border text-[#FAAD14] border-[#FAAD14] rounded-md  hover:bg-gray-50"
+				>
 					<span>
 						<RiArrowLeftSLine size={18} />
 					</span>

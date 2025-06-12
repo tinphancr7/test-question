@@ -18,7 +18,7 @@ import WorksheetSummaryTab from "../WorksheetSummaryTab";
 import NewQuestionTab from "../NewQuestionTab";
 import RightPanel from "../RightPanel";
 
-export default function EditDetails() {
+export default function EditDetails({onPrevStep}: {onPrevStep: () => void}) {
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
 	const [availableQuestions, setAvailableQuestions] =
@@ -36,11 +36,11 @@ export default function EditDetails() {
 		[activeId, selectedQuestions]
 	);
 
-	const handleDragStart = (event) => {
+	const handleDragStart = (event: any) => {
 		setActiveId(event.active.id as string);
 	};
 
-	const handleDragEnd = (event) => {
+	const handleDragEnd = (event: any) => {
 		const {active, over} = event;
 		if (!over) return;
 		if (active.id !== over.id) {
@@ -152,6 +152,7 @@ export default function EditDetails() {
 					onDragCancel={handleDragCancel}
 					sensors={sensors}
 					activeQuestion={activeQuestion}
+					onPrevStep={onPrevStep}
 				/>
 			</div>
 		</div>
