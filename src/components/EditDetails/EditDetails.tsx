@@ -10,14 +10,15 @@ import {arrayMove} from "@dnd-kit/sortable";
 import {useMemo, useState} from "react";
 
 import {Tab, Tabs} from "@heroui/react";
-import NewQuestionTab from "./components/NewQuestionTab";
-import QuestionHeader from "./components/QuestionHeader";
-import RightPanel from "./components/RightPanel";
-import Summary from "./components/Summary";
-import WorksheetSummaryTab from "./components/WorksheetSummaryTab";
-import {initialQuestions} from "./data/questions";
-import {Question} from "./types";
-export default function App() {
+import {initialQuestions} from "../../data/questions";
+import type {Question} from "../../types";
+import Summary from "../Summary";
+import QuestionHeader from "../QuestionHeader";
+import WorksheetSummaryTab from "../WorksheetSummaryTab";
+import NewQuestionTab from "../NewQuestionTab";
+import RightPanel from "../RightPanel";
+
+export default function EditDetails() {
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
 	const [availableQuestions, setAvailableQuestions] =
