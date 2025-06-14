@@ -1,6 +1,7 @@
 import {useState} from "react";
-import ConfigSetting from "./components/ConfigSetting/ConfigSetting";
-import EditDetails from "./components/EditDetails/EditDetails";
+import ConfigSetting from "./components/ConfigSetting";
+import EditDetails from "./components/EditDetails";
+
 const steps = ["Select Subject & Configuration Settings", "Edit details"];
 const App = () => {
 	const [currentStep, setCurrentStep] = useState(0);

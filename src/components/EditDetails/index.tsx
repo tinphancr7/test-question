@@ -12,13 +12,13 @@ import {useMemo, useState} from "react";
 import {Tab, Tabs} from "@heroui/react";
 import {initialQuestions} from "../../data/questions";
 import type {Question} from "../../types";
-import Summary from "../Summary";
-import QuestionHeader from "../QuestionHeader";
-import WorksheetSummaryTab from "../WorksheetSummaryTab";
-import NewQuestionTab from "../NewQuestionTab";
-import RightPanel from "../RightPanel";
+import Summary from "./Summary";
+import QuestionHeader from "./QuestionHeader";
+import WorksheetSummaryTab from "./WorksheetSummaryTab";
+import NewQuestionTab from "./NewQuestionTab";
+import RightPanel from "./RightPanel";
 
-export default function EditDetails({onPrevStep}: {onPrevStep: () => void}) {
+const EditDetails = ({onPrevStep}: {onPrevStep: () => void}) => {
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
 	const [availableQuestions, setAvailableQuestions] =
@@ -27,7 +27,9 @@ export default function EditDetails({onPrevStep}: {onPrevStep: () => void}) {
 
 	const sensors = useSensors(
 		useSensor(MouseSensor, {activationConstraint: {distance: 8}}),
-		useSensor(TouchSensor, {activationConstraint: {delay: 200, tolerance: 6}}),
+		useSensor(TouchSensor, {
+			activationConstraint: {delay: 200, tolerance: 6},
+		}),
 		useSensor(KeyboardSensor)
 	);
 
@@ -100,10 +102,11 @@ export default function EditDetails({onPrevStep}: {onPrevStep: () => void}) {
 					variant="light"
 					size="md"
 					classNames={{
+						tab: "h-10",
 						cursor: "bg-[#F5F7FA] ",
 						base: "px-2.5 pt-3",
 					}}
-					onSelectionChange={setSelected}
+					onSelectionChange={(key) => setSelected(String(key))}
 				>
 					<Tab key="summary" title="Worksheet summary">
 						<div className="px-6 border-t pt-4">
@@ -130,7 +133,7 @@ export default function EditDetails({onPrevStep}: {onPrevStep: () => void}) {
 								onSearchChange={(e) => console.log(e.target.value)}
 								onGetMoreClick={() => console.log("get more")}
 								onAddAllClick={() => addAllToSelected(availableQuestions)}
-								showAddAll={true}
+								showAddAll
 							/>
 							<NewQuestionTab
 								availableQuestions={availableQuestions}
@@ -143,7 +146,7 @@ export default function EditDetails({onPrevStep}: {onPrevStep: () => void}) {
 				</Tabs>
 			</div>
 
-			<div className="w-[47%] fixed right-0 top-0 bottom-0">
+			<div className="w-[47%] ">
 				<RightPanel
 					selectedQuestions={selectedQuestions}
 					removeSelectedQuestion={removeSelectedQuestion}
@@ -157,4 +160,6 @@ export default function EditDetails({onPrevStep}: {onPrevStep: () => void}) {
 			</div>
 		</div>
 	);
-}
+};
+
+export default EditDetails;
