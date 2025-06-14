@@ -19,8 +19,10 @@ interface TreeNodeElement {
   value: number; // luôn là number
   errorCount?: number;
   isBranch?: boolean;
+  isChecked: boolean; // REQUIRED boolean
 }
 
+// initialData: set isChecked: true for all nodes directly
 const initialData: TreeNodeElement[] = [
   {
     name: "ROOT",
@@ -29,14 +31,16 @@ const initialData: TreeNodeElement[] = [
     children: ["0", "100"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "TOEIC",
     id: "0",
     parent: "-1",
     children: ["1", "10", "20"],
-    isLocked: false, // Đổi từ true thành false
+    isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Listening",
@@ -45,6 +49,7 @@ const initialData: TreeNodeElement[] = [
     children: ["2", "8"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Part: Conversations",
@@ -53,6 +58,7 @@ const initialData: TreeNodeElement[] = [
     children: ["3"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Topic: Office communication",
@@ -61,6 +67,7 @@ const initialData: TreeNodeElement[] = [
     children: ["4"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Context: Meeting rescheduling",
@@ -69,6 +76,7 @@ const initialData: TreeNodeElement[] = [
     children: ["5", "6"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Question types: What is the man's problem? (inference)",
@@ -78,6 +86,7 @@ const initialData: TreeNodeElement[] = [
     isLocked: false,
     value: 0,
     errorCount: 4,
+    isChecked: true,
   },
   {
     name: "Question types: What will the woman likely do next? (prediction)",
@@ -86,6 +95,7 @@ const initialData: TreeNodeElement[] = [
     children: [],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Part: Short Talks",
@@ -94,6 +104,7 @@ const initialData: TreeNodeElement[] = [
     children: [],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Reading",
@@ -102,6 +113,7 @@ const initialData: TreeNodeElement[] = [
     children: ["11"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Part: Reading Comprehension",
@@ -110,6 +122,7 @@ const initialData: TreeNodeElement[] = [
     children: ["12", "13"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Emails",
@@ -118,6 +131,7 @@ const initialData: TreeNodeElement[] = [
     children: [],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Topic: Advertisements",
@@ -126,6 +140,7 @@ const initialData: TreeNodeElement[] = [
     children: [],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Grammar",
@@ -134,6 +149,7 @@ const initialData: TreeNodeElement[] = [
     children: ["21"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Part: Short Talks",
@@ -142,6 +158,7 @@ const initialData: TreeNodeElement[] = [
     children: [],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   // IELTS root
   {
@@ -151,6 +168,7 @@ const initialData: TreeNodeElement[] = [
     children: ["101", "102"],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Listening",
@@ -159,6 +177,7 @@ const initialData: TreeNodeElement[] = [
     children: [],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
   {
     name: "Reading",
@@ -167,6 +186,7 @@ const initialData: TreeNodeElement[] = [
     children: [],
     isLocked: false,
     value: 0,
+    isChecked: true,
   },
 ];
 
@@ -222,6 +242,107 @@ function distributeValueRecursively(
   return newData;
 }
 
+// Utility to ensure isChecked is always boolean
+function ensureIsCheckedBoolean(nodes: TreeNodeElement[]): TreeNodeElement[] {
+  return nodes.map((n) => ({
+    ...n,
+    isChecked: typeof n.isChecked === "boolean" ? n.isChecked : false,
+  }));
+}
+
+// Hàm phân phối giá trị chỉ cho các node được checked
+function distributeCheckedValues(
+  data: TreeNodeElement[],
+  nodeId: string,
+  value: number
+): TreeNodeElement[] {
+  const node = data.find((n) => n.id === nodeId);
+  if (!node) return ensureIsCheckedBoolean(data);
+  if (!node.children || node.children.length === 0) {
+    return ensureIsCheckedBoolean(
+      data.map((n) => (n.id === nodeId ? { ...n, value } : n))
+    );
+  }
+  const children = node.children.map((cid) => data.find((n) => n.id === cid)!);
+  const checkedChildren = children.filter((c) => c.isChecked === true);
+  const lockedChecked = checkedChildren.filter((c) => c.isLocked);
+  const unlockedChecked = checkedChildren.filter((c) => !c.isLocked);
+  const lockedSum = lockedChecked.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  const remain = Math.max(0, value - lockedSum);
+  const base =
+    unlockedChecked.length > 0
+      ? Math.floor(remain / unlockedChecked.length)
+      : 0;
+  let remainder =
+    unlockedChecked.length > 0 ? remain % unlockedChecked.length : 0;
+  let newData = data.map((n) => {
+    if (lockedChecked.find((c) => c.id === n.id)) {
+      return n;
+    }
+    if (unlockedChecked.find((c) => c.id === n.id)) {
+      const v = base + (remainder > 0 ? 1 : 0);
+      if (remainder > 0) remainder--;
+      return { ...n, value: v };
+    }
+    if (
+      children.find((c) => c.id === n.id) &&
+      !checkedChildren.find((c) => c.id === n.id)
+    ) {
+      return { ...n, value: 0 };
+    }
+    return n;
+  });
+  // Đệ quy cho từng node con
+  for (const child of children) {
+    const childValue = newData.find((n) => n.id === child.id)?.value ?? 0;
+    newData = distributeCheckedValues(newData, child.id, childValue);
+  }
+  newData = newData.map((n) => (n.id === nodeId ? { ...n, value } : n));
+  return ensureIsCheckedBoolean(newData);
+}
+
+// Recursively set isChecked for node and all descendants
+function setCheckedRecursive(
+  data: TreeNodeElement[],
+  nodeId: string,
+  checked: boolean
+): TreeNodeElement[] {
+  const node = data.find((n) => n.id === nodeId);
+  if (!node) return data;
+  let newData = data.map((n) =>
+    n.id === nodeId ? { ...n, isChecked: checked } : n
+  );
+  if (node.children && node.children.length > 0) {
+    for (const cid of node.children) {
+      newData = setCheckedRecursive(newData, cid, checked);
+    }
+  }
+  return newData;
+}
+
+// Cập nhật trạng thái isChecked cho cha nếu tất cả con đều unchecked
+function propagateUncheckUpwards(
+  data: TreeNodeElement[],
+  nodeId: string
+): TreeNodeElement[] {
+  const node = data.find((n) => n.id === nodeId);
+  if (!node || !node.parent) return data;
+  const parent = data.find((n) => n.id === node.parent);
+  if (!parent) return data;
+  const siblings = parent.children.map(
+    (cid) => data.find((n) => n.id === cid)!
+  );
+  // Nếu tất cả con đều unchecked thì cha cũng unchecked
+  if (siblings.every((n) => !n.isChecked)) {
+    let newData = data.map((n) =>
+      n.id === parent.id ? { ...n, isChecked: false } : n
+    );
+    // propagate tiếp lên ancestor
+    return propagateUncheckUpwards(newData, parent.id);
+  }
+  return data;
+}
+
 function QuestionSettings({
   maxNumQuestions = 100,
 }: {
@@ -233,187 +354,91 @@ function QuestionSettings({
     TreeNodeElement[]
   >([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
   // State để lưu nodeId bị lỗi tổng
   const [warningNodeIds, setWarningNodeIds] = useState<string[]>([]);
   // Thay vì chỉ lưu lastChangedId, lưu mảng lastChangedIds
   const [lastChangedIds, setLastChangedIds] = useState<string[]>([]);
-  const [manuallySelectedNodes, setManuallySelectiedNodes] = useState([]);
-  console.log("manuallySelectedNodes", manuallySelectedNodes);
+
   // Phân phối giá trị khi mount hoặc maxNumQuestions thay đổi
-  const [selectChildren, setSelectChildren] = useState(false);
-  const [preserveSelection, setPreserveSelection] = useState(false);
   React.useEffect(() => {
-    // Tìm node root
     const root = data.find((n) => n.parent === null);
     if (!root) return;
-    let newData = data.map((n) => ({ ...n, value: 0 })); // reset value về 0
-    newData = distributeValueRecursively(newData, root.id, maxNumQuestions);
+    let newData = data.map((n) => ({ ...n, value: 0, isChecked: true }));
+    newData = distributeCheckedValues(newData, root.id, maxNumQuestions);
     setData(newData);
   }, [maxNumQuestions]);
 
-  const updateTreeData = (list, id, children) => {
-    const data = list.map((node) => {
-      if (node.id === id) {
-        node.children = children.map((el) => {
-          return el.id;
-        });
-      }
-      return node;
-    });
-    return data.concat(children);
-  };
-
-  const onLoadData = ({ element }) => {
-    return new Promise((resolve) => {
-      if (element.children.length > 0) {
-        resolve();
-        return;
-      }
-      setTimeout(() => {
-        setData((value) =>
-          updateTreeData(value, element.id, [
-            {
-              name: `Child Node ${value.length}`,
-              children: [],
-              id: value.length,
-              parent: element.id,
-              isBranch: true,
-            },
-            {
-              name: "Another child Node",
-              children: [],
-              id: value.length + 1,
-              parent: element.id,
-            },
-          ])
-        );
-        if (selectChildren) {
-          preserveSelection
-            ? setSelectedIds([
-                ...new Set([...manuallySelectedNodes, ...selectedIds]),
-                data.length,
-                data.length + 1,
-              ])
-            : setSelectedIds([data.length, data.length + 1]);
-        }
-        resolve();
-      }, 1000);
+  // Fix: onLoadData signature and id type
+  const onLoadData = async (props: { element: any }) => {
+    // Cast element to TreeNodeElement for custom properties
+    const element = props.element as TreeNodeElement;
+    if (element.children.length > 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setData((value) => {
+      // Add new children with string id and isChecked: true
+      const newChildren = [
+        {
+          name: `Child Node ${value.length}`,
+          children: [],
+          id: `${value.length}`,
+          parent: element.id,
+          isBranch: true,
+          value: 0,
+          isChecked: true,
+        },
+        {
+          name: "Another child Node",
+          children: [],
+          id: `${value.length + 1}`,
+          parent: element.id,
+          isBranch: true,
+          value: 0,
+          isChecked: true,
+        },
+      ];
+      // Update parent's children as string[]
+      return value
+        .map((node) =>
+          node.id === element.id
+            ? {
+                ...node,
+                children: [...node.children, ...newChildren.map((c) => c.id)],
+              }
+            : node
+        )
+        .concat(newChildren);
     });
   };
 
-  const wrappedOnLoadData = async (props) => {
-    const nodeHasNoChildData = props.element.children.length === 0;
+  // Fix: wrappedOnLoadData signature
+  const wrappedOnLoadData = async (props: { element: any }) => {
+    const element = props.element as TreeNodeElement;
+    const nodeHasNoChildData = element.children.length === 0;
     const nodeHasAlreadyBeenLoaded = nodesAlreadyLoaded.find(
-      (e) => e.id === props.element.id
+      (e) => e.id === element.id
     );
-
     await onLoadData(props);
-
     if (nodeHasNoChildData && !nodeHasAlreadyBeenLoaded) {
       const el = loadedAlertElement.current;
-      setNodesAlreadyLoaded([...nodesAlreadyLoaded, props.element]);
-      el && (el.innerHTML = `${props.element.name} loaded`);
-
-      // Clearing aria-live region so loaded node alerts no longer appear in DOM
+      setNodesAlreadyLoaded([...nodesAlreadyLoaded, element]);
+      if (el) el.innerHTML = `${element.name} loaded`;
       setTimeout(() => {
-        el && (el.innerHTML = "");
+        if (el) el.innerHTML = "";
       }, 5000);
     }
   };
 
-  const handleNodeSelect = ({ element, isSelected }) => {
-    isSelected &&
-      setManuallySelectiedNodes([...manuallySelectedNodes, element.id]);
-    !isSelected &&
-      setManuallySelectiedNodes(
-        manuallySelectedNodes.filter((id) => id === element.id)
-      );
+  // Fix: onNodeSelect signature and cast
+  const handleNodeSelect = (props: { element: any; isSelected: boolean }) => {
+    const element = props.element as TreeNodeElement;
+    setSelectedIds((prev) => {
+      if (props.isSelected) {
+        return [...prev, element.id];
+      } else {
+        return prev.filter((id) => id !== element.id);
+      }
+    });
   };
-
-  //   const updateTreeData = (
-  //     list: TreeNodeElement[],
-  //     id: number,
-  //     children: TreeNodeElement[]
-  //   ): TreeNodeElement[] => {
-  //     const data = list.map((node: TreeNodeElement) => {
-  //       if (node.id === id) {
-  //         node.children = children.map((el: TreeNodeElement) => el.id);
-  //       }
-  //       return node;
-  //     });
-  //     return data.concat(children);
-  //   };
-
-  //   // Fix: onLoadData signature and id type
-  //   const onLoadData = async (props: { element: any }) => {
-  //     // Cast element to TreeNodeElement for custom properties
-  //     const element = props.element as TreeNodeElement;
-  //     if (element.children.length > 0) return;
-  //     await new Promise((resolve) => setTimeout(resolve, 1000));
-  //     setData((value) => {
-  //       // Add new children with string id
-  //       const newChildren = [
-  //         {
-  //           name: `Child Node ${value.length}`,
-  //           children: [],
-  //           id: `${value.length}`,
-  //           parent: element.id,
-  //           isBranch: true,
-  //           value: 0,
-  //         },
-  //         {
-  //           name: "Another child Node",
-  //           children: [],
-  //           id: `${value.length + 1}`,
-  //           parent: element.id,
-  //           isBranch: true,
-  //           value: 0,
-  //         },
-  //       ];
-  //       // Update parent's children as string[]
-  //       return value
-  //         .map((node) =>
-  //           node.id === element.id
-  //             ? {
-  //                 ...node,
-  //                 children: [...node.children, ...newChildren.map((c) => c.id)],
-  //               }
-  //             : node
-  //         )
-  //         .concat(newChildren);
-  //     });
-  //   };
-
-  //   // Fix: wrappedOnLoadData signature
-  //   const wrappedOnLoadData = async (props: { element: any }) => {
-  //     const element = props.element as TreeNodeElement;
-  //     const nodeHasNoChildData = element.children.length === 0;
-  //     const nodeHasAlreadyBeenLoaded = nodesAlreadyLoaded.find(
-  //       (e) => e.id === element.id
-  //     );
-  //     await onLoadData(props);
-  //     if (nodeHasNoChildData && !nodeHasAlreadyBeenLoaded) {
-  //       const el = loadedAlertElement.current;
-  //       setNodesAlreadyLoaded([...nodesAlreadyLoaded, element]);
-  //       if (el) el.innerHTML = `${element.name} loaded`;
-  //       setTimeout(() => {
-  //         if (el) el.innerHTML = "";
-  //       }, 5000);
-  //     }
-  //   };
-
-  //   // Fix: onNodeSelect signature and cast
-  //   const handleNodeSelect = (props: { element: any; isSelected: boolean }) => {
-  //     const element = props.element as TreeNodeElement;
-  //     setSelectedIds((prev) => {
-  //       if (props.isSelected) {
-  //         return [...prev, element.id];
-  //       } else {
-  //         return prev.filter((id) => id !== element.id);
-  //       }
-  //     });
-  //   };
 
   // Hàm kiểm tra các node có tổng con không đúng
   function getInvalidSumNodeIds(
@@ -457,7 +482,26 @@ function QuestionSettings({
     if (!node || !node.parent) return false;
     return isDescendant(data, ancestorId, node.parent);
   };
-  console.log("selectedIds", selectedIds);
+
+  // Xử lý onChange checkbox: khi check/uncheck sẽ update isChecked và redistribute lại value
+  const handleCheckChange = (nodeId: string, checked: boolean) => {
+    setData((prev) => {
+      let newData = setCheckedRecursive(prev, nodeId, checked);
+      // Always keep root checked
+      newData = newData.map((n) =>
+        n.parent === null ? { ...n, isChecked: true } : n
+      );
+      // propagate trạng thái lên cha nếu uncheck
+      if (!checked) {
+        newData = propagateUncheckUpwards(newData, nodeId);
+      }
+      const root = newData.find((n) => n.parent === null);
+      if (!root) return newData;
+      newData = distributeCheckedValues(newData, root.id, maxNumQuestions);
+      return newData;
+    });
+  };
+
   return (
     <>
       <div>
@@ -483,11 +527,8 @@ function QuestionSettings({
               element,
               isBranch,
               isExpanded,
-              isSelected,
-              isHalfSelected,
               getNodeProps,
               level,
-              handleSelect,
               handleExpand,
             }) => {
               // Determine if this node is the last child of its parent using data from state
@@ -579,6 +620,7 @@ function QuestionSettings({
                   <ArrowIcon isOpen={isExpanded} />
                 );
               };
+              const node = data.find((n) => n.id === element.id)!;
               return (
                 <div
                   {...getNodeProps({ onClick: handleExpand })}
@@ -606,17 +648,23 @@ function QuestionSettings({
                   <div className="flex items-center gap-2">
                     <CheckBoxIcon
                       className={`bg-white border rounded-sm w-5 h-5 ${
-                        isHalfSelected || isSelected
-                          ? "text-primary"
-                          : "text-white"
+                        node.isChecked ? "text-primary" : "text-white"
                       }`}
                       onClick={(e: React.MouseEvent) => {
-                        if (!isExpanded) handleExpand(e);
-                        handleSelect(e);
                         e.stopPropagation();
+                        handleCheckChange(node.id, !node.isChecked);
                       }}
                       variant={
-                        isHalfSelected ? "some" : isSelected ? "all" : "none"
+                        node.isChecked
+                          ? node.children &&
+                            node.children.length > 0 &&
+                            node.children.some((cid) => {
+                              const child = data.find((n) => n.id === cid);
+                              return child && !child.isChecked;
+                            })
+                            ? "some"
+                            : "all"
+                          : "none"
                       }
                     />
                     <span className="name">
@@ -653,7 +701,7 @@ function QuestionSettings({
                                   ? "bg-gray-100 cursor-not-allowed"
                                   : "bg-white  border-gray-300 "
                               }`}
-                              value={node.value === 0 ? "" : node.value}
+                              value={node.value ?? ""}
                               onClick={(e) => e.stopPropagation()}
                               onChange={(e) => {
                                 let newValue =
