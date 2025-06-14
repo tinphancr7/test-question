@@ -42,19 +42,19 @@ const ConfigSetting = ({onNextStep}: ConfigSettingProps) => {
 					))}
 				</div>
 				<div className="flex  flex-row  border-t border-gray-200">
-					{/* <div className="w-2/3">
+					<div className="w-2/3">
 						<SubjectSelector
 							maxNumQuestions={maxNumQuestions}
 							setMaxNumQuestions={setMaxNumQuestions}
 						/>
 						<QuestionSettings maxNumQuestions={maxNumQuestions} />
-					</div> */}
-					<div className=" w-1/3 ">
+					</div>
+					{/* <div className=" w-1/3 ">
 						<TestSettings
 							onNextStep={onNextStep}
 							maxNumQuestions={maxNumQuestions}
 						/>
-					</div>
+					</div> */}
 				</div>
 			</div>
 		</div>
