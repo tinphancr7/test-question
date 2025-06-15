@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FaSquare, FaCheckSquare, FaMinusSquare } from "react-icons/fa";
 import { IoMdArrowDropright } from "react-icons/io";
 import { AiOutlineLoading } from "react-icons/ai";
@@ -239,10 +239,7 @@ function QuestionSettings({
   // Thay vì chỉ lưu lastChangedId, lưu mảng lastChangedIds
   const [lastChangedIds, setLastChangedIds] = useState<string[]>([]);
   const [manuallySelectedNodes, setManuallySelectiedNodes] = useState([]);
-  console.log("manuallySelectedNodes", manuallySelectedNodes);
-  // Phân phối giá trị khi mount hoặc maxNumQuestions thay đổi
-  const [selectChildren, setSelectChildren] = useState(false);
-  const [preserveSelection, setPreserveSelection] = useState(false);
+
   React.useEffect(() => {
     // Tìm node root
     const root = data.find((n) => n.parent === null);
@@ -288,15 +285,7 @@ function QuestionSettings({
             },
           ])
         );
-        if (selectChildren) {
-          preserveSelection
-            ? setSelectedIds([
-                ...new Set([...manuallySelectedNodes, ...selectedIds]),
-                data.length,
-                data.length + 1,
-              ])
-            : setSelectedIds([data.length, data.length + 1]);
-        }
+
         resolve();
       }, 1000);
     });
@@ -331,91 +320,11 @@ function QuestionSettings({
       );
   };
 
-  //   const updateTreeData = (
-  //     list: TreeNodeElement[],
-  //     id: number,
-  //     children: TreeNodeElement[]
-  //   ): TreeNodeElement[] => {
-  //     const data = list.map((node: TreeNodeElement) => {
-  //       if (node.id === id) {
-  //         node.children = children.map((el: TreeNodeElement) => el.id);
-  //       }
-  //       return node;
-  //     });
-  //     return data.concat(children);
-  //   };
+  useEffect(() => {
+    const allIds = initialData.map((node) => node.id);
+    setSelectedIds(allIds);
+  }, []);
 
-  //   // Fix: onLoadData signature and id type
-  //   const onLoadData = async (props: { element: any }) => {
-  //     // Cast element to TreeNodeElement for custom properties
-  //     const element = props.element as TreeNodeElement;
-  //     if (element.children.length > 0) return;
-  //     await new Promise((resolve) => setTimeout(resolve, 1000));
-  //     setData((value) => {
-  //       // Add new children with string id
-  //       const newChildren = [
-  //         {
-  //           name: `Child Node ${value.length}`,
-  //           children: [],
-  //           id: `${value.length}`,
-  //           parent: element.id,
-  //           isBranch: true,
-  //           value: 0,
-  //         },
-  //         {
-  //           name: "Another child Node",
-  //           children: [],
-  //           id: `${value.length + 1}`,
-  //           parent: element.id,
-  //           isBranch: true,
-  //           value: 0,
-  //         },
-  //       ];
-  //       // Update parent's children as string[]
-  //       return value
-  //         .map((node) =>
-  //           node.id === element.id
-  //             ? {
-  //                 ...node,
-  //                 children: [...node.children, ...newChildren.map((c) => c.id)],
-  //               }
-  //             : node
-  //         )
-  //         .concat(newChildren);
-  //     });
-  //   };
-
-  //   // Fix: wrappedOnLoadData signature
-  //   const wrappedOnLoadData = async (props: { element: any }) => {
-  //     const element = props.element as TreeNodeElement;
-  //     const nodeHasNoChildData = element.children.length === 0;
-  //     const nodeHasAlreadyBeenLoaded = nodesAlreadyLoaded.find(
-  //       (e) => e.id === element.id
-  //     );
-  //     await onLoadData(props);
-  //     if (nodeHasNoChildData && !nodeHasAlreadyBeenLoaded) {
-  //       const el = loadedAlertElement.current;
-  //       setNodesAlreadyLoaded([...nodesAlreadyLoaded, element]);
-  //       if (el) el.innerHTML = `${element.name} loaded`;
-  //       setTimeout(() => {
-  //         if (el) el.innerHTML = "";
-  //       }, 5000);
-  //     }
-  //   };
-
-  //   // Fix: onNodeSelect signature and cast
-  //   const handleNodeSelect = (props: { element: any; isSelected: boolean }) => {
-  //     const element = props.element as TreeNodeElement;
-  //     setSelectedIds((prev) => {
-  //       if (props.isSelected) {
-  //         return [...prev, element.id];
-  //       } else {
-  //         return prev.filter((id) => id !== element.id);
-  //       }
-  //     });
-  //   };
-
-  // Hàm kiểm tra các node có tổng con không đúng
   function getInvalidSumNodeIds(
     data: TreeNodeElement[],
     maxNumQuestions: number
