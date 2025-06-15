@@ -1,488 +1,531 @@
-import React, { useRef, useState } from "react";
-import { FaSquare, FaCheckSquare, FaMinusSquare } from "react-icons/fa";
-import { IoMdArrowDropright } from "react-icons/io";
-import { AiOutlineLoading } from "react-icons/ai";
-import TreeView from "react-accessible-treeview";
-import cx from "classnames";
-import "./styles.css";
+import { useEffect, useState } from "react";
+import { MdArrowRight } from "react-icons/md";
 
-// Define a type for tree node elements
-interface TreeNodeElement {
-  name: string;
-  id: string;
-  parent: string | null;
-  children: string[];
-  isLocked?: boolean;
-  value?: number | null;
-  errorCount?: number;
-  isBranch?: boolean;
+import { FaCircleInfo } from "react-icons/fa6";
+import { TiLockClosed, TiLockOpen } from "react-icons/ti";
+import { Tooltip } from "@heroui/react";
+import type { TreeMenuItem } from "../ConfigSetting/TreeMenu";
+
+import TreeMenu from "../ConfigSetting/TreeMenu";
+
+function allocateNumQuestions(
+  data: TreeMenuItem[],
+  parentNum: number | null
+): TreeMenuItem[] {
+  if (!data || data.length === 0 || parentNum == null) return data;
+  const n = data.length;
+  const base = Math.floor(parentNum / n);
+  let remainder = parentNum % n;
+  return data.map((item) => {
+    let thisNum = base + (remainder > 0 ? 1 : 0);
+    if (remainder > 0) remainder--;
+    let { children } = item;
+    if (children && children.length > 0) {
+      children = allocateNumQuestions(children, thisNum);
+      thisNum = children.reduce((sum, c) => sum + (c.numQuestion || 0), 0);
+    }
+    return { ...item, numQuestion: thisNum, children };
+  });
 }
 
-const initialData: TreeNodeElement[] = [
-  {
-    name: "ROOT",
-    id: "-1",
-    parent: null,
-    children: ["0", "100"],
-    isLocked: false,
-    value: null,
-  },
-  {
-    name: "TOEIC",
-    id: "0",
-    parent: "-1",
-    children: ["1", "10", "20"],
-    isLocked: true,
-    value: 100,
-  },
-  {
-    name: "Listening",
-    id: "1",
-    parent: "0",
-    children: ["2", "8"],
-    isLocked: true,
-    value: 50,
-  },
-  {
-    name: "Part: Conversations",
-    id: "2",
-    parent: "1",
-    children: ["3"],
-    isLocked: false,
-    value: 7,
-  },
-  {
-    name: "Topic: Office communication",
-    id: "3",
-    parent: "2",
-    children: ["4"],
-    isLocked: false,
-    value: 7,
-  },
-  {
-    name: "Context: Meeting rescheduling",
-    id: "4",
-    parent: "3",
-    children: ["5", "6"],
-    isLocked: true,
-    value: 7,
-  },
-  {
-    name: "Question types: What is the man's problem? (inference)",
-    id: "5",
-    parent: "4",
-    children: [],
-    isLocked: true,
-    value: 4,
-    errorCount: 4,
-  },
-  {
-    name: "Question types: What will the woman likely do next? (prediction)",
-    id: "6",
-    parent: "4",
-    children: [],
-    isLocked: false,
-    value: 3,
-  },
-  {
-    name: "Part: Short Talks",
-    id: "8",
-    parent: "1",
-    children: [],
-    isLocked: true,
-    value: 25,
-  },
-  {
-    name: "Reading",
-    id: "10",
-    parent: "0",
-    children: ["11"],
-    isLocked: true,
-    value: 50,
-  },
-  {
-    name: "Part: Reading Comprehension",
-    id: "11",
-    parent: "10",
-    children: ["12", "13"],
-    isLocked: false,
-    value: 50,
-  },
-  {
-    name: "Emails",
-    id: "12",
-    parent: "11",
-    children: [],
-    isLocked: false,
-    value: 25,
-  },
-  {
-    name: "Topic: Advertisements",
-    id: "13",
-    parent: "11",
-    children: [],
-    isLocked: false,
-    value: 25,
-  },
-  {
-    name: "Grammar",
-    id: "20",
-    parent: "0",
-    children: ["21"],
-    isLocked: false,
-    value: null,
-  },
-  {
-    name: "Part: Short Talks",
-    id: "21",
-    parent: "20",
-    children: [],
-    isLocked: false,
-    value: null,
-  },
-  // IELTS root
-  {
-    name: "IELTS",
-    id: "100",
-    parent: "-1",
-    children: ["101", "102"],
-    isLocked: false,
-    value: null,
-  },
-  {
-    name: "Listening",
-    id: "101",
-    parent: "100",
-    children: [],
-    isLocked: false,
-    value: null,
-  },
-  {
-    name: "Reading",
-    id: "102",
-    parent: "100",
-    children: [],
-    isLocked: false,
-    value: null,
-  },
-];
-
-function QuestionSettings() {
-  const loadedAlertElement = useRef<HTMLDivElement | null>(null);
-  const [data, setData] = useState<TreeNodeElement[]>(initialData);
-  const [nodesAlreadyLoaded, setNodesAlreadyLoaded] = useState<
-    TreeNodeElement[]
-  >([]);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [selectChildren, setSelectChildren] = useState(false);
-  const [preserveSelection, setPreserveSelection] = useState(false);
-  const [manuallySelectedNodes, setManuallySelectiedNodes] = useState<number[]>(
-    []
-  );
-
-  const updateTreeData = (
-    list: TreeNodeElement[],
-    id: number,
-    children: TreeNodeElement[]
-  ): TreeNodeElement[] => {
-    const data = list.map((node: TreeNodeElement) => {
-      if (node.id === id) {
-        node.children = children.map((el: TreeNodeElement) => el.id);
+// Hàm phân phối numQuestion đệ quy cho tree lồng nhau
+function distributeNumQuestionsRecursively(
+  data: TreeMenuItem[],
+  nodeId: string,
+  value: number | null
+): TreeMenuItem[] {
+  return data.map((item) => {
+    if (item.id === nodeId) {
+      // Nếu không có children thì chỉ set value
+      if (!item.children || item.children.length === 0) {
+        return { ...item, numQuestion: value };
       }
-      return node;
-    });
-    return data.concat(children);
-  };
+      // Nếu có children, phân phối value cho children
+      const children = item.children;
+      const lockedChildren = children.filter((c: TreeMenuItem) => c.isLocked);
+      const unlockedChildren = children.filter((c: TreeMenuItem) => !c.isLocked);
+      const lockedSum = lockedChildren.reduce((sum: number, c: TreeMenuItem) => sum + (c.numQuestion ?? 0), 0);
+      const remain = value !== null ? Math.max(0, value - lockedSum) : 0;
+      const base = unlockedChildren.length > 0 ? Math.floor(remain / unlockedChildren.length) : 0;
+      let remainder = unlockedChildren.length > 0 ? remain % unlockedChildren.length : 0;
+      // Gán value cho từng con
+      const newChildren = children.map((child: TreeMenuItem) => {
+        if (child.isLocked) return child;
+        const v = base + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder--;
+        return { ...child, numQuestion: v };
+      });
+      // Đệ quy cho từng con
+      const distributedChildren = newChildren.map((child: TreeMenuItem) => {
+        return distributeNumQuestionsRecursively([child], child.id, child.numQuestion)[0];
+      });
+      return { ...item, numQuestion: value, children: distributedChildren };
+    }
+    // Đệ quy cho các node khác
+    if (item.children && item.children.length > 0) {
+      return { ...item, children: distributeNumQuestionsRecursively(item.children, nodeId, value) };
+    }
+    return item;
+  });
+}
 
-  const onLoadData = ({
-    element,
-  }: {
-    element: TreeNodeElement;
-  }): Promise<void> => {
-    return new Promise<void>((resolve) => {
-      if (element.children.length > 0) {
-        resolve();
-        return;
-      }
-      setTimeout(() => {
-        setData((value) =>
-          updateTreeData(value, element.id, [
+const QuestionSettings = ({ maxNumQuestions = 100 }) => {
+  const initialCourseData = [
+    {
+      id: "toeic",
+      label: "TOEIC",
+      numQuestion: 50,
+      isLocked: false,
+      isChecked: false,
+      children: [
+        {
+          id: "listening",
+          label: "Listening",
+          numQuestion: 25,
+          isLocked: false,
+          isChecked: false,
+          children: [
             {
-              name: `Child Node ${value.length}`,
-              children: [],
-              id: value.length,
-              parent: element.id,
-              isBranch: true,
+              id: "part-conversations",
+              label: "Part : Conversations",
+              numQuestion: 25,
+              isLocked: false,
+              isChecked: false,
+              children: [
+                {
+                  id: "topic-office-communication",
+                  label: "Topic : Office communication",
+                  numQuestion: 25,
+                  isLocked: false,
+                  isChecked: false,
+                  children: [
+                    {
+                      id: "context-meeting-rescheduling",
+                      label: "Context : Meeting rescheduling",
+                      numQuestion: 10,
+                      isLocked: true,
+                      isChecked: false,
+                    },
+                    {
+                      id: "question-types-inference",
+                      label:
+                        "Question types : What is the man's problem ? ( inference )",
+                      numQuestion: 40,
+                      isLocked: false,
+                      isChecked: false,
+                      hasRedBadge: true,
+                      redBadgeValue: "4 0",
+                    },
+                    {
+                      id: "question-types-prediction",
+                      label:
+                        "Question types : What will the woman likely do next ? ( prediction )",
+                      numQuestion: 8,
+                      isLocked: false,
+                      isChecked: false,
+                    },
+                  ],
+                },
+              ],
             },
             {
-              name: "Another child Node",
-              children: [],
-              id: value.length + 1,
-              parent: element.id,
+              id: "part-short-talks",
+              label: "Part : Short Talks .",
+              numQuestion: 25,
+              isLocked: false,
+              isChecked: false,
             },
-          ])
-        );
-        if (selectChildren) {
-          if (preserveSelection) {
-            setSelectedIds([
-              ...new Set([
-                ...manuallySelectedNodes,
-                ...selectedIds,
-                data.length,
-                data.length + 1,
-              ]),
-            ]);
-          } else {
-            setSelectedIds([data.length, data.length + 1]);
-          }
-        }
-        resolve();
-      }, 1000);
-    });
-  };
+          ],
+        },
+        {
+          id: "reading",
+          label: "Reading",
+          numQuestion: 50,
+          isLocked: false,
+          isChecked: false,
+          children: [
+            {
+              id: "part-reading-comprehension",
+              label: "Part : Reading Comprehension",
+              numQuestion: 50,
+              isLocked: false,
+              isChecked: false,
+              children: [
+                {
+                  id: "emails",
+                  label: "Emails",
+                  numQuestion: 25,
+                  isLocked: false,
+                  isChecked: false,
+                },
+                {
+                  id: "topic-advertisements",
+                  label: "Topic : Advertisements",
+                  numQuestion: 25,
+                  isLocked: false,
+                  isChecked: false,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "grammar-toeic",
+          label: "Grammar",
+          numQuestion: null,
+          isLocked: false,
+          isChecked: false,
+        },
+      ],
+    },
+    {
+      id: "ielts",
+      label: "IELTS",
+      numQuestion: null,
+      isLocked: false,
+      isChecked: false,
+      children: [
+        {
+          id: "listening-ielts",
+          label: "Listening",
+          numQuestion: null,
+          isLocked: false,
+          isChecked: false,
+        },
+        {
+          id: "reading-ielts",
+          label: "Reading",
+          numQuestion: null,
+          isLocked: false,
+          isChecked: false,
+        },
+        {
+          id: "grammar-ielts",
+          label: "Grammar",
+          numQuestion: null,
+          isLocked: false,
+          isChecked: false,
+        },
+      ],
+    },
+  ];
 
-  const wrappedOnLoadData = async (props: { element: TreeNodeElement }) => {
-    const nodeHasNoChildData = props.element.children.length === 0;
-    const nodeHasAlreadyBeenLoaded = nodesAlreadyLoaded.find(
-      (e) => e.id === props.element.id
+  const [courseData, setCourseData] = useState<TreeMenuItem[]>([]);
+  // State để lưu các node đang warning
+  const [warningNodeIds, setWarningNodeIds] = useState<string[]>([]);
+  // State để lưu các node đã từng thay đổi và gây warning
+  const [lastChangedIds, setLastChangedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const allocatedData = allocateNumQuestions(
+      initialCourseData,
+      maxNumQuestions
     );
+    setCourseData(allocatedData);
+  }, [maxNumQuestions]);
 
-    await onLoadData(props);
-
-    if (nodeHasNoChildData && !nodeHasAlreadyBeenLoaded) {
-      const el = loadedAlertElement.current;
-      setNodesAlreadyLoaded([...nodesAlreadyLoaded, props.element]);
-      if (el) el.innerHTML = `${props.element.name} loaded`;
-      setTimeout(() => {
-        if (el) el.innerHTML = "";
-      }, 5000);
-    }
+  const updateItemForChildren = (
+    children: TreeMenuItem[],
+    checked: boolean
+  ): TreeMenuItem[] => {
+    return children.map((child) => ({
+      ...child,
+      isChecked: checked,
+      children: child.children
+        ? updateItemForChildren(child.children, checked)
+        : child.children,
+    }));
   };
 
-  const handleNodeSelect = ({
-    element,
-    isSelected,
-  }: {
-    element: TreeNodeElement;
-    isSelected: boolean;
-  }) => {
-    if (isSelected) {
-      setManuallySelectiedNodes([...manuallySelectedNodes, element.id]);
-    } else {
-      setManuallySelectiedNodes(
-        manuallySelectedNodes.filter((id) => id !== element.id)
-      );
-    }
+  // UpdateItem and handleItemChange: thay any bằng kiểu phù hợp
+  const updateItem = (
+    id: string,
+    key: keyof TreeMenuItem,
+    value: string | number | boolean | null,
+    currentData: TreeMenuItem[]
+  ): TreeMenuItem[] => {
+    return currentData.map((item) => {
+      if (item.id === id) {
+        const updatedItem = { ...item, [key]: value };
+        if (key === "isChecked" && item.children) {
+          // value phải là boolean
+          updatedItem.children = updateItemForChildren(
+            item.children,
+            Boolean(value)
+          );
+        }
+        return updatedItem;
+      }
+      if (item.children) {
+        const updatedChildren = updateItem(id, key, value, item.children);
+        let { isChecked } = item;
+        if (key === "isChecked") {
+          const allChecked = updatedChildren.every((child) => child.isChecked);
+          updatedChildren.some((child) => child.isChecked);
+          isChecked = !!allChecked;
+        }
+        return { ...item, children: updatedChildren, isChecked };
+      }
+      return item;
+    });
   };
 
-  return (
-    <>
-      <div>
-        <div
-          className="visually-hidden"
-          ref={loadedAlertElement}
-          role="alert"
-          aria-live="polite"
-        ></div>
+  // Helper: Check if a node is root (cần truyền data để dùng cho mọi thời điểm)
+  function getInvalidSumNodeIds(
+    data: TreeMenuItem[],
+    maxNumQuestions: number
+  ): string[] {
+    const invalidIds: string[] = [];
+    // 1. Kiểm tra tổng các node con của root
+    const rootChildren = data;
+    const sum = rootChildren.reduce((acc: number, n: TreeMenuItem) => acc + (n.numQuestion ?? 0), 0);
+    if (sum !== maxNumQuestions) {
+      rootChildren.forEach((n: TreeMenuItem) => invalidIds.push(n.id));
+    }
+    // 2. Kiểm tra tổng các node con của từng node (nếu có children)
+    function traverse(nodes: TreeMenuItem[]) {
+      for (const node of nodes) {
+        if (node.children && node.children.length > 0) {
+          const children = node.children;
+          const sum = children.reduce((acc: number, n: TreeMenuItem) => acc + (n.numQuestion ?? 0), 0);
+          if (sum !== node.numQuestion) {
+            children.forEach((n: TreeMenuItem) => invalidIds.push(n.id));
+          }
+          traverse(children);
+        }
+      }
+    }
+    traverse(data);
+    return invalidIds;
+  }
 
-        <div className="checkbox">
-          <TreeView
-            data={data}
-            aria-label="Checkbox tree"
-            onLoadData={wrappedOnLoadData}
-            onNodeSelect={handleNodeSelect}
-            selectedIds={selectedIds}
-            multiSelect
-            togglableSelect
-            propagateSelect
-            propagateSelectUpwards
-            nodeRenderer={({
-              element,
-              isBranch,
-              isExpanded,
-              isSelected,
-              isHalfSelected,
-              getNodeProps,
-              level,
-              handleSelect,
-              handleExpand,
-            }) => {
-              // Determine if this node is the last child of its parent using data from state
-              let isLastChild = false;
-              const elementId = element.id;
-              const parentId = element.parent;
-              if (parentId !== null) {
-                const parentNode = data.find(
-                  (n: TreeNodeElement) => n.id === parentId
-                );
-                if (
-                  parentNode &&
-                  parentNode.children[parentNode.children.length - 1] ===
-                    elementId
-                ) {
-                  isLastChild = true;
-                }
-              }
-              // Calculate which ancestor levels need a vertical line
-              const lines: React.ReactElement[] = [];
-              let ancestorId = element.parent;
-              let ancestorLevel = level - 1;
-              let leftOffset = -16;
-              while (
-                ancestorId !== null &&
-                ancestorId !== undefined &&
-                ancestorLevel > 0
-              ) {
-                const ancestorNode = data.find(
-                  (n: TreeNodeElement) => n.id === ancestorId
-                );
-                if (
-                  ancestorNode &&
-                  ancestorNode.parent !== null &&
-                  ancestorNode.parent !== undefined
-                ) {
-                  const ancestorParent = data.find(
-                    (n: TreeNodeElement) => n.id === ancestorNode.parent
-                  );
-                  const isAncestorLast =
-                    ancestorParent &&
-                    ancestorParent.children[
-                      ancestorParent.children.length - 1
-                    ] === ancestorNode.id;
-                  if (!isAncestorLast) {
-                    lines.push(
-                      <span
-                        key={ancestorLevel}
-                        className="vertical-dots"
-                        style={{
-                          position: "absolute",
-                          left: leftOffset,
-                          top: 0,
-                          height: "100%",
-                          borderLeft: "2px dotted #d1b97f",
-                          zIndex: 0,
-                        }}
-                        aria-hidden="true"
-                      />
-                    );
-                  }
-                }
-                ancestorId = ancestorNode ? ancestorNode.parent : null;
-                ancestorLevel--;
-                leftOffset -= 40;
-              }
-              const branchNode = (
-                isExpanded: boolean,
-                element: {
-                  name: string;
-                  children: unknown[];
-                }
-              ) => {
-                return isExpanded && element.children.length === 0 ? (
-                  <>
-                    <span
-                      role="alert"
-                      aria-live="assertive"
-                      className="visually-hidden"
-                    >
-                      loading {element.name}
-                    </span>
-                    <AiOutlineLoading
-                      aria-hidden={true}
-                      className="loading-icon"
-                    />
-                  </>
-                ) : (
-                  <ArrowIcon isOpen={isExpanded} />
-                );
-              };
-              return (
-                <div
-                  {...getNodeProps({ onClick: handleExpand })}
-                  style={{ marginLeft: 40 * (level - 1), position: "relative" }}
-                  className="flex items-center px-2 h-14  "
-                >
-                  {/* Render ancestor vertical lines for seamless effect */}
-                  {lines}
-                  {/* Vertical dotted line for this node, seamless */}
-                  {level > 1 && (
-                    <span
-                      className="vertical-dots"
-                      style={{
-                        position: "absolute",
-                        left: -16,
-                        top: 0,
-                        height: isLastChild ? "50%" : "100%",
-                        borderLeft: "2px dotted #d1b97f",
-                        zIndex: 0,
-                      }}
-                      aria-hidden="true"
-                    />
-                  )}
-                  {isBranch && branchNode(isExpanded, element)}
-                  <div className="flex items-center gap-2">
-                    <CheckBoxIcon
-                      className={`bg-white border rounded-sm w-5 h-5 ${
-                        isHalfSelected || isSelected
-                          ? "text-primary"
-                          : "text-white"
-                      }`}
-                      onClick={(e: React.MouseEvent) => {
-                        if (!isExpanded) handleExpand(e);
-                        handleSelect(e);
-                        e.stopPropagation();
-                      }}
-                      variant={
-                        isHalfSelected ? "some" : isSelected ? "all" : "none"
-                      }
-                    />
-                    <span className="name">
-                      {element.name}-{element.id}
-                    </span>
-                  </div>
-                </div>
-              );
+  // Khi thay đổi số lượng câu hỏi, cập nhật warningNodeIds và lastChangedIds
+  const handleItemChange = (id: string, key: string, value: unknown) => {
+    let safeValue: string | number | boolean | null = null;
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
+      safeValue = value;
+    }
+    setCourseData((prevData) => {
+      let newData: TreeMenuItem[];
+      if (key === "numQuestion") {
+        // Nếu node có children, phân phối lại cho các con/cháu
+        const node = findNodeById(prevData, id);
+        if (node && node.children && node.children.length > 0) {
+          newData = distributeNumQuestionsRecursively(prevData, id, typeof safeValue === 'number' ? safeValue : null);
+        } else {
+          newData = updateItem(id, key as keyof TreeMenuItem, safeValue, prevData);
+        }
+      } else {
+        newData = updateItem(id, key as keyof TreeMenuItem, safeValue, prevData);
+      }
+      const invalidIds = getInvalidSumNodeIds(newData, maxNumQuestions);
+      setLastChangedIds((prevIds) => {
+        let next = prevIds;
+        if (invalidIds.includes(id)) {
+          if (!prevIds.includes(id)) next = [...prevIds, id];
+        } else {
+          next = prevIds.filter((nid) => nid !== id);
+        }
+        next = next.filter((nid) => invalidIds.includes(nid));
+        return next;
+      });
+      setWarningNodeIds(invalidIds);
+      return newData;
+    });
+  };
+
+  const renderTreeMenuItem = (
+    item: TreeMenuItem,
+    level: number,
+    isExpanded: boolean,
+    toggleExpand: () => void,
+    onItemChange: (id: string, key: string, value: unknown) => void,
+    isLastChild?: boolean
+  ) => {
+    // Chỉ show warning nếu node đã từng thay đổi và vẫn còn warning
+    const showWarning = lastChangedIds.includes(item.id) && warningNodeIds.includes(item.id);
+
+    // Function to determine if we need vertical line for ancestor levels
+    const getAncestorLines = (currentLevel: number, isLastAtLevel: boolean) => {
+      const lines = [];
+
+      // Draw vertical lines for all ancestor levels
+      for (let i = 1; i <= currentLevel; i++) {
+        const shouldDrawLine = i < currentLevel || !isLastAtLevel;
+        lines.push(
+          <div
+            key={`vertical-${i}`}
+            className="absolute border-l-2 border-dotted border-gray-400"
+            style={{
+              left: `${(i - 1) * 1.5 + 1.75}rem`,
+              top: 0,
+              bottom: shouldDrawLine ? 0 : "50%",
+              width: "0px",
             }}
           />
+        );
+      }
+
+      return lines;
+    };
+
+    return (
+      <div
+        className={`relative flex items-center py-3 gap-4 pr-10 cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
+          level === 0 ? "bg-gray-50 border-b" : ""
+        }`}
+        style={{ paddingLeft: `${level * 1.5 + 1}rem` }}
+        onClick={toggleExpand}
+      >
+        {/* Vertical dotted lines for all ancestor levels */}
+        {level > 0 && getAncestorLines(level, isLastChild || false)}
+
+        {/* Horizontal dotted connector */}
+        {level > 0 && (
+          <div
+            className="absolute border-t-2 border-dotted border-gray-400"
+            style={{
+              left: `${(level - 1) * 1.5 + 1.75}rem`,
+              top: "50%",
+              width: "1.25rem",
+              height: "0px",
+            }}
+          />
+        )}
+
+        <MdArrowRight
+          className={`transition-transform flex-shrink-0 w-6 h-6 duration-200 ${
+            item.children && item.children.length > 0 ? "" : "invisible"
+          } ${isExpanded ? "rotate-90" : ""}`}
+        />
+        <div className="inline-flex items-center gap-1.5">
+          <label
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center cursor-pointer relative"
+          >
+            <input
+              type="checkbox"
+              checked={item.isChecked}
+              onChange={(e) =>
+                onItemChange(item.id, "isChecked", e.target.checked)
+              }
+              className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-amber-600 checked:border-amber-600"
+            />
+            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3.5 w-3.5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                stroke="currentColor"
+                strokeWidth="1"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </span>
+          </label>
+          <span className="flex-grow text-sm sm:text-base text-gray-800 truncate">
+            {item.label}
+          </span>
+        </div>
+
+        <div className="flex items-center ml-auto flex-shrink-0 relative">
+          {item.numQuestion != null && (
+            <div className="flex items-center gap-2">
+              {showWarning && (
+                <Tooltip
+                  content={
+                    <div className="max-w-lg">
+                      Currently, there are only {item.numQuestion} questions
+                      available in the selected chapter.
+                      <br />
+                      You may consider selecting additional chapters, reducing
+                      the number of questions, or creating your own questions in
+                      the "Edit Details" step.
+                    </div>
+                  }
+                >
+                  <FaCircleInfo size={18} className="text-red-500" />
+                </Tooltip>
+              )}
+              <input
+                type="number"
+                className={`w-16 text-center  border-1 focus:outline-none rounded-md px-1 h-10 text-gray-700 font-medium text-sm mr-2 ${
+                  item.isLocked
+                    ? "bg-gray-100 cursor-not-allowed"
+                    : "bg-white  border-gray-300 "
+                } ${showWarning ? "border-red-500 ring-red-500" : ""}`}
+                value={item.numQuestion}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  const newVal = parseInt(e.target.value, 10);
+                  onItemChange(
+                    item.id,
+                    "numQuestion",
+                    isNaN(newVal) ? null : newVal
+                  );
+                }}
+                readOnly={item.isLocked}
+              />
+            </div>
+          )}
+          {item.isLocked ? (
+            <span
+              className="ml-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                onItemChange(item.id, "isLocked", !item.isLocked);
+              }}
+            >
+              <TiLockClosed size={18} className="text-black" />
+            </span>
+          ) : (
+            <span
+              className="ml-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                onItemChange(item.id, "isLocked", !item.isLocked);
+              }}
+            >
+              <TiLockOpen size={18} className="text-black" />
+            </span>
+          )}
         </div>
       </div>
-    </>
-  );
-}
+    );
+  };
 
-const ArrowIcon = ({
-  isOpen,
-  className,
-}: {
-  isOpen: boolean;
-  className?: string;
-}) => {
-  const baseClass = "arrow";
-  const classes = cx(
-    baseClass,
-    { [`${baseClass}--closed`]: !isOpen },
-    { [`${baseClass}--open`]: isOpen },
-    className
-  );
-  return <IoMdArrowDropright className={classes} />;
-};
-
-const CheckBoxIcon = ({
-  variant,
-  ...rest
-}: { variant: "all" | "none" | "some" } & React.ComponentProps<
-  typeof FaCheckSquare
->) => {
-  switch (variant) {
-    case "all":
-      return <FaCheckSquare size={20} {...rest} />;
-    case "none":
-      return <FaSquare size={20} {...rest} />;
-    case "some":
-      return <FaMinusSquare size={20} {...rest} />;
-    default:
-      return null;
+  // Helper: Tìm node theo id trong tree
+  function findNodeById(nodes: TreeMenuItem[], id: string): TreeMenuItem | null {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children) {
+        const found = findNodeById(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
   }
+
+  return (
+    <div className="font-inter flex justify-center items-start">
+      <div className="w-full bg-white rounded-lg shadow-xl overflow-hidden">
+        <TreeMenu
+          data={courseData}
+          onItemChange={handleItemChange}
+          renderItem={renderTreeMenuItem}
+        />
+      </div>
+    </div>
+  );
 };
 
 export default QuestionSettings;

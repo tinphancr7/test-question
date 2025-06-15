@@ -13,12 +13,10 @@ const TreeMenuNode: React.FC<{
     toggleExpand: () => void,
     onItemChange: (id: string, key: string, value: any) => void,
     isLastChild?: boolean,
-    hasParent?: boolean,
-    ancestorInfo?: boolean[]
+    hasParent?: boolean
   ) => React.ReactNode;
   isLast?: boolean;
-  ancestorInfo?: boolean[];
-}> = ({ item, level, onItemChange, renderItem, isLast, ancestorInfo = [] }) => {
+}> = ({ item, level, onItemChange, renderItem, isLast }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [maxHeight, setMaxHeight] = useState("0px");
@@ -54,9 +52,6 @@ const TreeMenuNode: React.FC<{
     };
   }, [isExpanded]);
 
-  // Create new ancestorInfo for children by adding current level's isLast status
-  const childAncestorInfo = [...ancestorInfo, !isLast];
-
   return (
     <div>
       {renderItem(
@@ -66,8 +61,7 @@ const TreeMenuNode: React.FC<{
         toggleExpand,
         onItemChange,
         isLast,
-        level > 0,
-        ancestorInfo
+        level > 0
       )}
       <div
         ref={contentRef}
@@ -80,7 +74,6 @@ const TreeMenuNode: React.FC<{
             onItemChange={onItemChange}
             level={level + 1}
             renderItem={renderItem}
-            ancestorInfo={childAncestorInfo}
           />
         )}
       </div>

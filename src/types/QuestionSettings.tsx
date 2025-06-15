@@ -28,67 +28,6 @@ function allocateNumQuestions(
   });
 }
 
-// Hàm phân phối numQuestion đệ quy cho tree lồng nhau
-function distributeNumQuestionsRecursively(
-  data: TreeMenuItem[],
-  nodeId: string,
-  value: number | null
-): TreeMenuItem[] {
-  return data.map((item) => {
-    if (item.id === nodeId) {
-      // Nếu không có children thì chỉ set value
-      if (!item.children || item.children.length === 0) {
-        return { ...item, numQuestion: value };
-      }
-      // Nếu có children, phân phối value cho children
-      const children = item.children;
-      const lockedChildren = children.filter((c: TreeMenuItem) => c.isLocked);
-      const unlockedChildren = children.filter(
-        (c: TreeMenuItem) => !c.isLocked
-      );
-      const lockedSum = lockedChildren.reduce(
-        (sum: number, c: TreeMenuItem) => sum + (c.numQuestion ?? 0),
-        0
-      );
-      const remain = value !== null ? Math.max(0, value - lockedSum) : 0;
-      const base =
-        unlockedChildren.length > 0
-          ? Math.floor(remain / unlockedChildren.length)
-          : 0;
-      let remainder =
-        unlockedChildren.length > 0 ? remain % unlockedChildren.length : 0;
-      // Gán value cho từng con
-      const newChildren = children.map((child: TreeMenuItem) => {
-        if (child.isLocked) return child;
-        const v = base + (remainder > 0 ? 1 : 0);
-        if (remainder > 0) remainder--;
-        return { ...child, numQuestion: v };
-      });
-      // Đệ quy cho từng con
-      const distributedChildren = newChildren.map((child: TreeMenuItem) => {
-        return distributeNumQuestionsRecursively(
-          [child],
-          child.id,
-          child.numQuestion
-        )[0];
-      });
-      return { ...item, numQuestion: value, children: distributedChildren };
-    }
-    // Đệ quy cho các node khác
-    if (item.children && item.children.length > 0) {
-      return {
-        ...item,
-        children: distributeNumQuestionsRecursively(
-          item.children,
-          nodeId,
-          value
-        ),
-      };
-    }
-    return item;
-  });
-}
-
 const QuestionSettings = ({ maxNumQuestions = 100 }) => {
   const initialCourseData = [
     {
@@ -96,35 +35,35 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
       label: "TOEIC",
       numQuestion: 50,
       isLocked: false,
-      isChecked: true,
+      isChecked: false,
       children: [
         {
           id: "listening",
           label: "Listening",
           numQuestion: 25,
           isLocked: false,
-          isChecked: true,
+          isChecked: false,
           children: [
             {
               id: "part-conversations",
               label: "Part : Conversations",
               numQuestion: 25,
               isLocked: false,
-              isChecked: true,
+              isChecked: false,
               children: [
                 {
                   id: "topic-office-communication",
                   label: "Topic : Office communication",
                   numQuestion: 25,
                   isLocked: false,
-                  isChecked: true,
+                  isChecked: false,
                   children: [
                     {
                       id: "context-meeting-rescheduling",
                       label: "Context : Meeting rescheduling",
                       numQuestion: 10,
                       isLocked: true,
-                      isChecked: true,
+                      isChecked: false,
                     },
                     {
                       id: "question-types-inference",
@@ -132,7 +71,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
                         "Question types : What is the man's problem ? ( inference )",
                       numQuestion: 40,
                       isLocked: false,
-                      isChecked: true,
+                      isChecked: false,
                       hasRedBadge: true,
                       redBadgeValue: "4 0",
                     },
@@ -142,7 +81,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
                         "Question types : What will the woman likely do next ? ( prediction )",
                       numQuestion: 8,
                       isLocked: false,
-                      isChecked: true,
+                      isChecked: false,
                     },
                   ],
                 },
@@ -153,7 +92,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
               label: "Part : Short Talks .",
               numQuestion: 25,
               isLocked: false,
-              isChecked: true,
+              isChecked: false,
             },
           ],
         },
@@ -162,28 +101,28 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
           label: "Reading",
           numQuestion: 50,
           isLocked: false,
-          isChecked: true,
+          isChecked: false,
           children: [
             {
               id: "part-reading-comprehension",
               label: "Part : Reading Comprehension",
               numQuestion: 50,
               isLocked: false,
-              isChecked: true,
+              isChecked: false,
               children: [
                 {
                   id: "emails",
                   label: "Emails",
                   numQuestion: 25,
                   isLocked: false,
-                  isChecked: true,
+                  isChecked: false,
                 },
                 {
                   id: "topic-advertisements",
                   label: "Topic : Advertisements",
                   numQuestion: 25,
                   isLocked: false,
-                  isChecked: true,
+                  isChecked: false,
                 },
               ],
             },
@@ -194,7 +133,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
           label: "Grammar",
           numQuestion: null,
           isLocked: false,
-          isChecked: true,
+          isChecked: false,
         },
       ],
     },
@@ -203,28 +142,28 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
       label: "IELTS",
       numQuestion: null,
       isLocked: false,
-      isChecked: true,
+      isChecked: false,
       children: [
         {
           id: "listening-ielts",
           label: "Listening",
           numQuestion: null,
           isLocked: false,
-          isChecked: true,
+          isChecked: false,
         },
         {
           id: "reading-ielts",
           label: "Reading",
           numQuestion: null,
           isLocked: false,
-          isChecked: true,
+          isChecked: false,
         },
         {
           id: "grammar-ielts",
           label: "Grammar",
           numQuestion: null,
           isLocked: false,
-          isChecked: true,
+          isChecked: false,
         },
       ],
     },
@@ -233,8 +172,6 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
   const [courseData, setCourseData] = useState<TreeMenuItem[]>([]);
   // State để lưu các node đang warning
   const [warningNodeIds, setWarningNodeIds] = useState<string[]>([]);
-  // State để lưu các node đã từng thay đổi và gây warning
-  const [lastChangedIds, setLastChangedIds] = useState<string[]>([]);
 
   useEffect(() => {
     const allocatedData = allocateNumQuestions(
@@ -290,7 +227,71 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
     });
   };
 
+  // Helper: Find parent and siblings of a node by id
+  function findParentAndSiblings(
+    nodes: TreeMenuItem[],
+    childId: string
+  ): { parent: TreeMenuItem | null; siblings: TreeMenuItem[] } | null {
+    for (const node of nodes) {
+      if (
+        node.children &&
+        node.children.some((c: TreeMenuItem) => c.id === childId)
+      ) {
+        return { parent: node, siblings: node.children };
+      }
+      if (node.children) {
+        const found = findParentAndSiblings(node.children, childId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
   // Helper: Check if a node is root (cần truyền data để dùng cho mọi thời điểm)
+  function isRootLevel(item: TreeMenuItem, data: TreeMenuItem[]): boolean {
+    return !data.some((node) =>
+      node.children?.some((c: TreeMenuItem) => c.id === item.id)
+    );
+  }
+
+  // Helper: Check if a node is currently causing a warning
+  function isWarningNode(item: TreeMenuItem, data: TreeMenuItem[]): boolean {
+    // 1. If not root, check if sum of siblings' numQuestion matches parent's numQuestion
+    if (!isRootLevel(item, data)) {
+      const found = findParentAndSiblings(data, item.id);
+      if (found && found.parent?.numQuestion != null) {
+        const siblingsSum = found.siblings.reduce(
+          (sum, c) => sum + (c.numQuestion || 0),
+          0
+        );
+        if (siblingsSum !== found.parent.numQuestion) return true;
+      }
+    }
+    // 2. If root, check if sum of all root numQuestion matches maxNumQuestions
+    if (isRootLevel(item, data)) {
+      const totalSum = data.reduce(
+        (sum, node) => sum + (node.numQuestion || 0),
+        0
+      );
+      if (totalSum !== maxNumQuestions) return true;
+    }
+    return false;
+  }
+
+  // Helper: Duyệt toàn bộ tree, trả về danh sách id các node đang warning
+  function getAllWarningIds(data: TreeMenuItem[]): string[] {
+    let ids: string[] = [];
+    function traverse(nodes: TreeMenuItem[]) {
+      for (const node of nodes) {
+        if (isWarningNode(node, data)) ids.push(node.id);
+        if (node.children) traverse(node.children);
+      }
+    }
+    traverse(data);
+    return ids;
+  }
+
+  // Hàm kiểm tra node con của node khác
   function getInvalidSumNodeIds(
     data: TreeMenuItem[],
     maxNumQuestions: number
@@ -298,10 +299,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
     const invalidIds: string[] = [];
     // 1. Kiểm tra tổng các node con của root
     const rootChildren = data;
-    const sum = rootChildren.reduce(
-      (acc: number, n: TreeMenuItem) => acc + (n.numQuestion ?? 0),
-      0
-    );
+    const sum = rootChildren.reduce((acc: number, n: TreeMenuItem) => acc + (n.numQuestion ?? 0), 0);
     if (sum !== maxNumQuestions) {
       rootChildren.forEach((n: TreeMenuItem) => invalidIds.push(n.id));
     }
@@ -310,10 +308,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
       for (const node of nodes) {
         if (node.children && node.children.length > 0) {
           const children = node.children;
-          const sum = children.reduce(
-            (acc: number, n: TreeMenuItem) => acc + (n.numQuestion ?? 0),
-            0
-          );
+          const sum = children.reduce((acc: number, n: TreeMenuItem) => acc + (n.numQuestion ?? 0), 0);
           if (sum !== node.numQuestion) {
             children.forEach((n: TreeMenuItem) => invalidIds.push(n.id));
           }
@@ -325,105 +320,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
     return invalidIds;
   }
 
-  // Helper function to calculate total available questions from parent
-  const getAvailableQuestionsFromParent = (
-    nodeId: string, 
-    data: TreeMenuItem[]
-  ): number => {
-    // Find parent of the node
-    function findParent(nodes: TreeMenuItem[], targetId: string, parent: TreeMenuItem | null = null): TreeMenuItem | null {
-      for (const node of nodes) {
-        if (node.children) {
-          for (const child of node.children) {
-            if (child.id === targetId) {
-              return node;
-            }
-          }
-          const found = findParent(node.children, targetId, node);
-          if (found) return found;
-        }
-      }
-      return parent;
-    }
-
-    const parent = findParent(data, nodeId);
-    return parent ? (parent.numQuestion || maxNumQuestions) : maxNumQuestions;
-  };
-
-  // Helper function to redistribute questions among siblings when one is checked/unchecked
-  const redistributeAmongSiblings = (
-    data: TreeMenuItem[],
-    changedNodeId: string,
-    isChecked: boolean
-  ): TreeMenuItem[] => {
-    function redistributeInLevel(nodes: TreeMenuItem[], parentNumQuestion: number): TreeMenuItem[] {
-      const targetNode = nodes.find(n => n.id === changedNodeId);
-      if (!targetNode) {
-        // If target node is not in this level, recurse into children
-        return nodes.map(node => ({
-          ...node,
-          children: node.children ? redistributeInLevel(node.children, node.numQuestion || 0) : node.children
-        }));
-      }
-
-      // Found the target node, redistribute among siblings
-      const checkedNodes = nodes.filter(n => n.isChecked || (n.id === changedNodeId && isChecked));
-      const uncheckedNodes = nodes.filter(n => !n.isChecked && !(n.id === changedNodeId && isChecked));
-      
-      if (checkedNodes.length === 0) {
-        // All unchecked, set all to 0
-        return nodes.map(node => ({
-          ...node,
-          numQuestion: 0,
-          children: node.children ? allocateNumQuestions(node.children, 0) : node.children
-        }));
-      }
-
-      // Distribute parentNumQuestion among checked nodes
-      const lockedNodes = checkedNodes.filter(n => n.isLocked);
-      const unlockedNodes = checkedNodes.filter(n => !n.isLocked);
-      
-      const lockedSum = lockedNodes.reduce((sum, n) => sum + (n.numQuestion || 0), 0);
-      const remainingForUnlocked = Math.max(0, parentNumQuestion - lockedSum);
-      
-      const basePerUnlocked = unlockedNodes.length > 0 ? Math.floor(remainingForUnlocked / unlockedNodes.length) : 0;
-      let remainder = unlockedNodes.length > 0 ? remainingForUnlocked % unlockedNodes.length : 0;
-
-      return nodes.map(node => {
-        if (!node.isChecked && !(node.id === changedNodeId && isChecked)) {
-          // Unchecked nodes get 0
-          return {
-            ...node,
-            numQuestion: 0,
-            children: node.children ? allocateNumQuestions(node.children, 0) : node.children
-          };
-        }
-        
-        if (node.isLocked) {
-          // Locked nodes keep their value
-          return {
-            ...node,
-            children: node.children ? allocateNumQuestions(node.children, node.numQuestion || 0) : node.children
-          };
-        }
-
-        // Unlocked checked nodes get distributed value
-        const newNumQuestion = basePerUnlocked + (remainder > 0 ? 1 : 0);
-        if (remainder > 0) remainder--;
-
-        return {
-          ...node,
-          numQuestion: newNumQuestion,
-          children: node.children ? allocateNumQuestions(node.children, newNumQuestion) : node.children
-        };
-      });
-    }
-
-    // Start redistribution from root level
-    return redistributeInLevel(data, maxNumQuestions);
-  };
-
-  // Khi thay đổi số lượng câu hỏi, cập nhật warningNodeIds và lastChangedIds
+  // Khi thay đổi số lượng câu hỏi, cập nhật warningNodeIds
   const handleItemChange = (id: string, key: string, value: unknown) => {
     let safeValue: string | number | boolean | null = null;
     if (
@@ -434,56 +331,8 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
       safeValue = value;
     }
     setCourseData((prevData) => {
-      let newData: TreeMenuItem[];
-      
-      if (key === "isChecked") {
-        // Handle checkbox change with redistribution
-        const updatedData = updateItem(
-          id,
-          key as keyof TreeMenuItem,
-          safeValue,
-          prevData
-        );
-        
-        // Redistribute questions among siblings based on checked status
-        newData = redistributeAmongSiblings(updatedData, id, Boolean(safeValue));
-      } else if (key === "numQuestion") {
-        // Nếu node có children, phân phối lại cho các con/cháu
-        const node = findNodeById(prevData, id);
-        if (node && node.children && node.children.length > 0) {
-          newData = distributeNumQuestionsRecursively(
-            prevData,
-            id,
-            typeof safeValue === "number" ? safeValue : null
-          );
-        } else {
-          newData = updateItem(
-            id,
-            key as keyof TreeMenuItem,
-            safeValue,
-            prevData
-          );
-        }
-      } else {
-        newData = updateItem(
-          id,
-          key as keyof TreeMenuItem,
-          safeValue,
-          prevData
-        );
-      }
-      
+      const newData = updateItem(id, key as keyof TreeMenuItem, safeValue, prevData);
       const invalidIds = getInvalidSumNodeIds(newData, maxNumQuestions);
-      setLastChangedIds((prevIds) => {
-        let next = prevIds;
-        if (invalidIds.includes(id)) {
-          if (!prevIds.includes(id)) next = [...prevIds, id];
-        } else {
-          next = prevIds.filter((nid) => nid !== id);
-        }
-        next = next.filter((nid) => invalidIds.includes(nid));
-        return next;
-      });
       setWarningNodeIds(invalidIds);
       return newData;
     });
@@ -495,13 +344,11 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
     isExpanded: boolean,
     toggleExpand: () => void,
     onItemChange: (id: string, key: string, value: unknown) => void,
-    isLastChild?: boolean,
-    hasParent?: boolean,
-    ancestorInfo?: boolean[]
+    isLastChild?: boolean
   ) => {
-    // Chỉ show warning nếu node đã từng thay đổi và vẫn còn warning
-    const showWarning =
-      lastChangedIds.includes(item.id) && warningNodeIds.includes(item.id);
+    // Lấy danh sách id warning mỗi lần render
+    const warningIds = getAllWarningIds(courseData);
+    const showWarning = warningNodeIds.includes(item.id);
 
     // Function to determine if we need vertical line for ancestor levels
     const getAncestorLines = (currentLevel: number, isLastAtLevel: boolean) => {
@@ -527,33 +374,6 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
       return lines;
     };
 
-    // Additional vertical line for current node if it has children (to connect to its children)
-    const getCurrentNodeVerticalLine = () => {
-      if (level === 0) return null;
-      
-      const hasChildren = item.children && item.children.length > 0;
-      const isLastSibling = isLastChild;
-      
-      // Draw line if node has children AND is expanded AND is the last sibling
-      // This fixes the gap for last siblings that have children
-      if (hasChildren && isExpanded && isLastSibling) {
-        return (
-          <div
-            key={`vertical-node-children`}
-            className="absolute border-l-2 border-dotted border-gray-400"
-            style={{
-              left: `${(level - 1) * 1.5 + 1.75}rem`,
-              top: "50%",
-              bottom: 0,
-              width: "0px",
-            }}
-          />
-        );
-      }
-      
-      return null;
-    };
-
     return (
       <div
         className={`relative flex items-center py-3 gap-4 pr-10 cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
@@ -562,9 +382,8 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
         style={{ paddingLeft: `${level * 1.5 + 1}rem` }}
         onClick={toggleExpand}
       >
-        {/* Vertical dotted lines */}
-        {getAncestorLines(level, isLastChild || false)}
-        {getCurrentNodeVerticalLine()}
+        {/* Vertical dotted lines for all ancestor levels */}
+        {level > 0 && getAncestorLines(level, isLastChild || false)}
 
         {/* Horizontal dotted connector */}
         {level > 0 && (
@@ -640,10 +459,10 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
               )}
               <input
                 type="number"
-                className={`w-16 text-center border-1 focus:outline-none rounded-md px-1 h-10 text-gray-700 font-medium text-sm mr-2 ${
+                className={`w-16 text-center  border-1 focus:outline-none rounded-md px-1 h-10 text-gray-700 font-medium text-sm mr-2 ${
                   item.isLocked
                     ? "bg-gray-100 cursor-not-allowed"
-                    : "bg-white border-gray-300"
+                    : "bg-white  border-gray-300 "
                 } ${showWarning ? "border-red-500 ring-red-500" : ""}`}
                 value={item.numQuestion}
                 onClick={(e) => e.stopPropagation()}
@@ -684,21 +503,6 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
       </div>
     );
   };
-
-  // Helper: Tìm node theo id trong tree
-  function findNodeById(
-    nodes: TreeMenuItem[],
-    id: string
-  ): TreeMenuItem | null {
-    for (const node of nodes) {
-      if (node.id === id) return node;
-      if (node.children) {
-        const found = findNodeById(node.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
 
   return (
     <div className="font-inter flex justify-center items-start">
