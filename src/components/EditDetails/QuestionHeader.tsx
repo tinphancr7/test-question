@@ -1,6 +1,6 @@
 // components/QuestionHeader.tsx
-import React from 'react';
-import { IoSearch } from 'react-icons/io5';
+import React from "react";
+import { IoSearch } from "react-icons/io5";
 
 interface QuestionHeaderProps {
   searchPlaceholder?: string;
@@ -11,7 +11,7 @@ interface QuestionHeaderProps {
 }
 
 const QuestionHeader = ({
-  searchPlaceholder = 'Search',
+  searchPlaceholder = "Search",
   onSearchChange,
   onGetMoreClick,
   onAddAllClick,
@@ -32,7 +32,7 @@ const QuestionHeader = ({
       <div className="flex gap-2 h-10">
         <button
           onClick={onGetMoreClick}
-          className="px-6 py-2 bg-transparent border-[#D48806] rounded-lg border text-[#D48806] transition-colors duration-200"
+          className="px-6 py-2 bg-transparent border-primary rounded-lg border text-primary transition-colors duration-200"
         >
           Get more question
         </button>
@@ -40,7 +40,7 @@ const QuestionHeader = ({
         {showAddAll && (
           <button
             onClick={onAddAllClick}
-            className="py-2 px-4 bg-[#FAAD14] text-white rounded-lg transition-colors duration-200"
+            className="py-2 px-4 bg-primary text-white rounded-lg transition-colors duration-200"
           >
             Add all
           </button>

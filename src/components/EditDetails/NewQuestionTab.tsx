@@ -1,19 +1,19 @@
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import {
   DndContext,
   DragOverlay,
   closestCenter,
   useSensors,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   arrayMove,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { useState, useCallback } from 'react';
-import { Question } from '../../types';
-import ProblemCardOverlay from './ProblemCardOverlay';
-import SortableQuestionCard from './SortableQuestionCard';
+} from "@dnd-kit/sortable";
+import { useState, useCallback } from "react";
+import { Question } from "../../types";
+import ProblemCardOverlay from "./ProblemCardOverlay";
+import SortableQuestionCard from "./SortableQuestionCard";
 
 interface NewQuestionTabProps {
   onAddQuestion: (question: Question) => void;
@@ -33,12 +33,6 @@ const NewQuestionTab = ({
   const activeQuestion = activeId
     ? availableQuestions.find((q) => q.id === activeId)
     : null;
-  // const filteredQuestions = availableQuestions.filter(
-  //   (question) =>
-  //     question.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     (question.questionText &&
-  //       question.questionText.toLowerCase().includes(searchTerm.toLowerCase()))
-  // );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);

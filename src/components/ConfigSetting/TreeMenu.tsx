@@ -14,17 +14,15 @@ export interface TreeMenuItem {
 
 interface TreeMenuProps {
   data: TreeMenuItem[];
-  onItemChange: (id: string, key: string, value: any) => void;
+  onItemChange: (id: string, key: string, value: unknown) => void;
   level?: number;
-  renderItem?: (
+  renderItem: (
     item: TreeMenuItem,
     level: number,
     isExpanded: boolean,
     toggleExpand: () => void,
-    onItemChange: (id: string, key: string, value: any) => void,
-    isLastChild?: boolean,
-    hasParent?: boolean,
-    ancestorInfo?: boolean[]
+    onItemChange: (id: string, key: string, value: unknown) => void,
+    isLastChild?: boolean
   ) => React.ReactNode;
   ancestorInfo?: boolean[];
 }
@@ -36,17 +34,6 @@ const TreeMenu: React.FC<TreeMenuProps> = ({
   renderItem,
   ancestorInfo = [],
 }) => {
-  // Default render function if none provided
-  const defaultRenderItem = (
-    item: TreeMenuItem,
-    level: number,
-    isExpanded: boolean,
-    toggleExpand: () => void,
-    onItemChange: (id: string, key: string, value: any) => void
-  ) => (
-    <div>{item.label}</div>
-  );
-
   return (
     <div>
       {data.map((item, idx) => (
@@ -55,7 +42,7 @@ const TreeMenu: React.FC<TreeMenuProps> = ({
           item={item}
           level={level}
           onItemChange={onItemChange}
-          renderItem={renderItem || defaultRenderItem}
+          renderItem={renderItem}
           isLast={idx === data.length - 1}
           ancestorInfo={ancestorInfo}
         />

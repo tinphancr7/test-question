@@ -5,16 +5,14 @@ import type { TreeMenuItem } from "./TreeMenu";
 const TreeMenuNode: React.FC<{
   item: TreeMenuItem;
   level: number;
-  onItemChange: (id: string, key: string, value: any) => void;
+  onItemChange: (id: string, key: string, value: unknown) => void;
   renderItem: (
     item: TreeMenuItem,
     level: number,
     isExpanded: boolean,
     toggleExpand: () => void,
-    onItemChange: (id: string, key: string, value: any) => void,
-    isLastChild?: boolean,
-    hasParent?: boolean,
-    ancestorInfo?: boolean[]
+    onItemChange: (id: string, key: string, value: unknown) => void,
+    isLastChild?: boolean
   ) => React.ReactNode;
   isLast?: boolean;
   ancestorInfo?: boolean[];
@@ -54,7 +52,6 @@ const TreeMenuNode: React.FC<{
     };
   }, [isExpanded]);
 
-  // Create new ancestorInfo for children by adding current level's isLast status
   const childAncestorInfo = [...ancestorInfo, !isLast];
 
   return (
@@ -65,9 +62,7 @@ const TreeMenuNode: React.FC<{
         isExpanded,
         toggleExpand,
         onItemChange,
-        isLast,
-        level > 0,
-        ancestorInfo
+        isLast
       )}
       <div
         ref={contentRef}

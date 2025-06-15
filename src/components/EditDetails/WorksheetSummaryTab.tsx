@@ -1,12 +1,12 @@
-import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
+import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import SortableRow from './SortableRow';
+} from "@dnd-kit/sortable";
+import SortableRow from "./SortableRow";
 
-import { Question } from '../../types';
-import TableRowOverlay from './TableRowOverlay';
+import { Question } from "../../types";
+import TableRowOverlay from "./TableRowOverlay";
 
 interface WorksheetSummaryTabProps {
   selectedQuestions: Question[];

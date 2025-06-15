@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { MdArrowLeft, MdArrowRight } from 'react-icons/md';
+import { useRef, useState } from "react";
+import { MdArrowLeft, MdArrowRight } from "react-icons/md";
 
 interface SubjectSelectorProps {
   maxNumQuestions: number;
@@ -12,22 +12,22 @@ const SubjectSelector = ({
 }: SubjectSelectorProps) => {
   // Define an array of categories (tags)
   const categories = [
-    'English',
-    'Math',
-    'History',
-    'Art',
-    'Science',
-    'Geography',
-    'Music',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'Literature',
-    'Economics',
+    "English",
+    "Math",
+    "History",
+    "Art",
+    "Science",
+    "Geography",
+    "Music",
+    "Physics",
+    "Chemistry",
+    "Biology",
+    "Literature",
+    "Economics",
   ];
 
   // State to keep track of the currently active category
-  const [activeCategory, setActiveCategory] = useState('English');
+  const [activeCategory, setActiveCategory] = useState("English");
   // Ref for the scrollable container to enable programmatic scrolling
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -39,14 +39,14 @@ const SubjectSelector = ({
   // Function to scroll the container left
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
     }
   };
 
   // Function to scroll the container right
   const scrollRight = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
     }
   };
 
@@ -57,7 +57,7 @@ const SubjectSelector = ({
         <div
           ref={scrollContainerRef}
           className="flex-1 flex overflow-x-auto whitespace-nowrap scrollbar-hide px-4 py-3 "
-          style={{ scrollBehavior: 'smooth' }} // Ensures smooth scrolling for mouse wheel/trackpad
+          style={{ scrollBehavior: "smooth" }} // Ensures smooth scrolling for mouse wheel/trackpad
         >
           {categories.map((category) => (
             <button
@@ -68,8 +68,8 @@ const SubjectSelector = ({
                 p-2.5 h-[42px] mx-1 text-sm rounded-lg transition-all duration-300 ease-in-out
                 ${
                   activeCategory === category
-                    ? 'bg-amber-500 text-white shadow-md' // Active state styles
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300' // Inactive state styles
+                    ? "bg-amber-500 text-white shadow-md" // Active state styles
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300" // Inactive state styles
                 }
                 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-amber-300
               `}
@@ -103,7 +103,7 @@ const SubjectSelector = ({
           htmlFor="numQuestions"
           className="block text-gray-700 text-sm font-medium mb-2"
         >
-          Number of questions:{' '}
+          Number of questions:{" "}
           <span className="font-normal text-gray-600">
             Maximum 150 questions
           </span>
@@ -114,8 +114,8 @@ const SubjectSelector = ({
               key={num}
               className={`px-4 py-2 border rounded-md text-sm ${
                 maxNumQuestions === num
-                  ? 'bg-yellow-100 border-yellow-400 text-yellow-800'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ? "bg-yellow-100 border-yellow-400 text-yellow-800"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
               }`}
               onClick={() => setMaxNumQuestions(num)}
               type="button"
