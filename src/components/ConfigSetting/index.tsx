@@ -2,6 +2,7 @@ import { useState } from "react";
 import QuestionSettings from "./QuestionSettings";
 import SubjectSelector from "./SubjectSelector";
 import TestSettings from "./TestSettings";
+import QuestionSelector from "./QuestionSelector";
 
 interface ConfigSettingProps {
   onNextStep: () => void;
@@ -43,7 +44,8 @@ const ConfigSetting = ({ onNextStep }: ConfigSettingProps) => {
         </div>
         <div className="flex  flex-row  border-t border-gray-200">
           <div className="w-2/3">
-            <SubjectSelector
+            <SubjectSelector />
+            <QuestionSelector
               maxNumQuestions={maxNumQuestions}
               setMaxNumQuestions={setMaxNumQuestions}
             />

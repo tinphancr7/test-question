@@ -4,6 +4,12 @@ import {
 } from "@dnd-kit/sortable";
 
 import { closestCenter, DndContext, DragOverlay } from "@dnd-kit/core";
+import type {
+  DragStartEvent,
+  DragEndEvent,
+  SensorDescriptor,
+  SensorOptions,
+} from "@dnd-kit/core";
 
 import { RiArrowLeftSLine, RiArrowRightSLine } from "react-icons/ri";
 import { useState } from "react";
@@ -11,27 +17,32 @@ import type { Question } from "../../types";
 import ProblemCardOverlay from "./ProblemCardOverlay";
 import SortableQuestionCard from "./SortableQuestionCard";
 import { FaCheck } from "react-icons/fa6";
+import { FaRegTrashAlt } from "react-icons/fa";
 
 interface RightPanelProps {
   selectedQuestions: Question[];
-  removeSelectedQuestion: (id: string) => void;
-  onDragStart: (event: any) => void;
-  onDragEnd: (event: any) => void;
+  onRemoveSelectedQuestion: (id: string) => void;
+  onRemoveAllSelectedQuestions: () => void;
+  onDragStart: (event: DragStartEvent) => void;
+  onDragEnd: (event: DragEndEvent) => void;
   onDragCancel: () => void;
-  sensors: any;
+  sensors: SensorDescriptor<SensorOptions>[];
   activeQuestion?: Question | null;
   onPrevStep: () => void;
+  showRemoveAll?: boolean;
 }
 
 const RightPanel = ({
   selectedQuestions,
-  removeSelectedQuestion,
+  onRemoveSelectedQuestion,
+  onRemoveAllSelectedQuestions,
   onDragStart,
   onDragEnd,
   onDragCancel,
   sensors,
   activeQuestion,
   onPrevStep,
+  showRemoveAll,
 }: RightPanelProps) => {
   const [showAnswer, setShowAnswer] = useState(true);
 
@@ -42,6 +53,15 @@ const RightPanel = ({
           Selected problem list ({selectedQuestions.length} items)
         </h4>
         <div className="flex items-center gap-2">
+          {showRemoveAll && (
+            <button
+              onClick={onRemoveAllSelectedQuestions}
+              className="flex items-center gap-1 px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100"
+            >
+              <FaRegTrashAlt size={16} />
+              <span>Delete all</span>
+            </button>
+          )}
           <button className="flex items-center gap-1 px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100">
             <span className="text-gray-700">A→Z</span>
             <span>Sort</span>
@@ -85,7 +105,7 @@ const RightPanel = ({
                 key={question.id}
                 question={question}
                 index={index}
-                onRemoveQuestion={removeSelectedQuestion}
+                onRemoveQuestion={onRemoveSelectedQuestion}
                 showAnswer={showAnswer}
               />
             ))}

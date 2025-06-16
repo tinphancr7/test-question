@@ -11,9 +11,10 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useState, useCallback } from "react";
-import { Question } from "../../types";
+
 import ProblemCardOverlay from "./ProblemCardOverlay";
 import SortableQuestionCard from "./SortableQuestionCard";
+import type { Question } from "../../types";
 
 interface NewQuestionTabProps {
   onAddQuestion: (question: Question) => void;

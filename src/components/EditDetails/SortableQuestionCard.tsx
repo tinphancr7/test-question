@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FaRegTrashAlt } from 'react-icons/fa';
 import { MdDragIndicator } from 'react-icons/md';
-import { Question } from '../../types';
+import type { Question } from '../../types';
 
 const Badge = ({ children }: { children: React.ReactNode }) => (
   <span className="inline-flex w-fit items-center rounded-md bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/10">

@@ -1,19 +1,20 @@
 import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
+import type { DragStartEvent, DragEndEvent, SensorDescriptor, SensorOptions } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import SortableRow from "./SortableRow";
 
-import { Question } from "../../types";
+import type { Question } from "../../types";
 import TableRowOverlay from "./TableRowOverlay";
 
 interface WorksheetSummaryTabProps {
   selectedQuestions: Question[];
-  onDragStart: (event: any) => void;
-  onDragEnd: (event: any) => void;
+  onDragStart: (event: DragStartEvent) => void;
+  onDragEnd: (event: DragEndEvent) => void;
   onDragCancel: () => void;
-  sensors: any;
+  sensors: SensorDescriptor<SensorOptions>[];
   activeQuestion?: Question | null;
 }
 

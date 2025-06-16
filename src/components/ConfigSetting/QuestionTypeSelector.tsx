@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {FaInfoCircle} from "react-icons/fa";
 import {TiLockClosed, TiLockOpen} from "react-icons/ti";
 import {
@@ -35,7 +35,7 @@ const QuestionTypeSelector: React.FC<QuestionTypeSelectorProps> = ({
 		questionGroup: null,
 	});
 
-	const redistributeCheckedEqually = (types: QuestionTypes) => {
+	const redistributeCheckedEqually = useCallback((types: QuestionTypes) => {
 		let checkedLockedSum = 0;
 		questionTypeKeys.forEach((key) => {
 			if (types[key].isChecked && types[key].isLocked)
@@ -64,11 +64,11 @@ const QuestionTypeSelector: React.FC<QuestionTypeSelectorProps> = ({
 			}
 		});
 		return newTypes;
-	};
+	}, [maxNumQuestions]);
 
 	useEffect(() => {
 		setQuestionTypes((prev) => redistributeCheckedEqually(prev));
-	}, [maxNumQuestions]);
+	}, [maxNumQuestions, redistributeCheckedEqually]);
 
 	const handleQuestionTypeLock = (type: QuestionTypeKey) => {
 		setQuestionTypes((prev) => ({

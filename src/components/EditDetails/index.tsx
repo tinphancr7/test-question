@@ -6,10 +6,11 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useMemo, useState } from "react";
 
-import { Tab, Tabs } from "@heroui/react";
+import { Tab, Tabs, useDisclosure } from "@heroui/react";
 import { initialQuestions } from "../../data/questions";
 import type { Question } from "../../types";
 import Summary from "./Summary";
@@ -17,10 +18,12 @@ import QuestionHeader from "./QuestionHeader";
 import WorksheetSummaryTab from "./WorksheetSummaryTab";
 import NewQuestionTab from "./NewQuestionTab";
 import RightPanel from "./RightPanel";
+import ModalGetMoreQuestion from "./ModalGetMoreQuestion";
 
 const EditDetails = ({ onPrevStep }: { onPrevStep: () => void }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
+  const { isOpen, onOpenChange } = useDisclosure();
   const [availableQuestions, setAvailableQuestions] =
     useState<Question[]>(initialQuestions);
   const [selected, setSelected] = useState("new-question");
@@ -38,11 +41,11 @@ const EditDetails = ({ onPrevStep }: { onPrevStep: () => void }) => {
     [activeId, selectedQuestions]
   );
 
-  const handleDragStart = (event: any) => {
+  const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
     if (active.id !== over.id) {
@@ -76,7 +79,7 @@ const EditDetails = ({ onPrevStep }: { onPrevStep: () => void }) => {
     );
   };
 
-  const removeSelectedQuestion = (id: string) => {
+  const handleRemoveSelectedQuestion = (id: string) => {
     let removed: Question | undefined;
     setSelectedQuestions((prev) => {
       const updated = prev.filter((q) => {
@@ -90,6 +93,11 @@ const EditDetails = ({ onPrevStep }: { onPrevStep: () => void }) => {
         prev.some((q) => q.id === removed!.id) ? prev : [...prev, removed!]
       );
     }
+  };
+
+  const handleRemoveAllSelectedQuestions = () => {
+    setAvailableQuestions((prev) => [...prev, ...selectedQuestions]);
+    setSelectedQuestions([]);
   };
 
   return (
@@ -113,7 +121,7 @@ const EditDetails = ({ onPrevStep }: { onPrevStep: () => void }) => {
               <Summary />
               <QuestionHeader
                 onSearchChange={(e) => console.log(e.target.value)}
-                onGetMoreClick={() => console.log("get more")}
+                onGetMoreClick={onOpenChange}
                 showAddAll={false}
               />
               <WorksheetSummaryTab
@@ -131,7 +139,7 @@ const EditDetails = ({ onPrevStep }: { onPrevStep: () => void }) => {
               <Summary />
               <QuestionHeader
                 onSearchChange={(e) => console.log(e.target.value)}
-                onGetMoreClick={() => console.log("get more")}
+                onGetMoreClick={onOpenChange}
                 onAddAllClick={() => addAllToSelected(availableQuestions)}
                 showAddAll
               />
@@ -148,14 +156,21 @@ const EditDetails = ({ onPrevStep }: { onPrevStep: () => void }) => {
 
       <RightPanel
         selectedQuestions={selectedQuestions}
-        removeSelectedQuestion={removeSelectedQuestion}
+        onRemoveSelectedQuestion={handleRemoveSelectedQuestion}
+        onRemoveAllSelectedQuestions={handleRemoveAllSelectedQuestions}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
         sensors={sensors}
         activeQuestion={activeQuestion}
         onPrevStep={onPrevStep}
+        showRemoveAll={
+          selected === "new-question" && selectedQuestions.length > 0
+        }
       />
+      {isOpen && (
+        <ModalGetMoreQuestion isOpen={isOpen} onOpenChange={onOpenChange} />
+      )}
     </div>
   );
 };

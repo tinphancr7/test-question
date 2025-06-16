@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 import { MdDragIndicator } from 'react-icons/md';
-import { Question } from '../../types';
+import type { Question } from '../../types';
 
 interface SortableRowProps {
   question: Question;

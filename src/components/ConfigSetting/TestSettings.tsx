@@ -1,19 +1,18 @@
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { FaClock, FaInfoCircle } from "react-icons/fa";
-import { IoMdSettings } from "react-icons/io";
+import { FaClock } from "react-icons/fa";
 import { MdOutlinePercent } from "react-icons/md";
 import { RiArrowRightSLine } from "react-icons/ri";
-import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 
-import { Button, Switch } from "@heroui/react";
+import { Button } from "@heroui/react";
 
 import CustomRadioGroup from "../form/custom-radio-group";
 import CustomSelect from "../form/custom-select";
 import InputField from "../form/input-field";
-import QuestionTypeSelector from "./QuestionTypeSelector";
 import SingleFileUpload from "./SingleFileUpload";
+import TestAdvancedSettings from "./TestAdvancedSettings";
 
 interface TestSettingsProps {
   onNextStep: () => void;
@@ -95,6 +94,7 @@ const TestSettings = ({ onNextStep, maxNumQuestions }: TestSettingsProps) => {
   });
 
   const [thumbnail, setThumbnail] = useState<File | null>(null);
+
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const handleThumbnailChange = (file: File | null) => {
     setThumbnail(file);
@@ -102,7 +102,7 @@ const TestSettings = ({ onNextStep, maxNumQuestions }: TestSettingsProps) => {
   };
 
   const onSubmit = handleSubmit((data) => {
-    console.log("Form submitted with data:", data);
+    console.log("Form submitted with data:", thumbnail, data);
     onNextStep();
   });
 
@@ -195,73 +195,16 @@ const TestSettings = ({ onNextStep, maxNumQuestions }: TestSettingsProps) => {
 
         <SingleFileUpload
           label="Thumbnail image"
-          value={thumbnail}
           previewUrl={thumbnailPreview}
           onChange={handleThumbnailChange}
           required
         />
 
-        <div className="col-span-2 ">
-          <div className="flex items-center justify-between mb-2">
-            <label className="block  text-sm font-bold">
-              Test level (dificulty)
-            </label>
-            <div className="flex items-center justify-center gap-2">
-              <IoMdSettings />
-              <span>Difficult setting</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {[1, 2, 3, 4, 5].map((level) => (
-              <button
-                key={level}
-                className={`flex-1 px-4 py-2 border rounded-md text-sm ${
-                  selectedDifficulty === level
-                    ? "bg-yellow-100 border-yellow-400 text-yellow-800"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
-                onClick={() => setSelectedDifficulty(level)}
-              >
-                {level}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="col-span-2 ">
-          <div className="flex items-center justify-between mb-2">
-            <label className="block  text-sm font-bold">Question type</label>
-            <div className="flex items-center justify-center gap-2">
-              <IoMdSettings />
-              <span> Question type setting</span>
-            </div>
-          </div>
-          <QuestionTypeSelector maxNumQuestions={maxNumQuestions} />
-        </div>
-
-        <div className="col-span-2  flex items-center gap-2 border py-2.5 px-4 rounded">
-          <Switch size="sm" defaultSelected color="default">
-            OFF AI Scoring
-          </Switch>
-
-          <FaInfoCircle className="text-gray-500 " />
-        </div>
-        <div className="col-span-2 ">
-          <label className="block  text-sm font-bold mb-2">
-            Additional options
-          </label>
-          <div className="flex items-center gap-2 border py-2.5 px-4 rounded">
-            <input
-              type="checkbox"
-              id="excludeDuplicate"
-              className=" h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="excludeDuplicate" className="text-gray-700 text-sm">
-              Excluding existing launch problems
-            </label>
-            <FaInfoCircle className="text-gray-500 " />
-          </div>
-        </div>
+        <TestAdvancedSettings
+          selectedDifficulty={selectedDifficulty}
+          setSelectedDifficulty={setSelectedDifficulty}
+          maxNumQuestions={maxNumQuestions}
+        />
 
         <Controller
           control={control}

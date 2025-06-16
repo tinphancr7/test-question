@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MdArrowRight } from "react-icons/md";
 
+import { Tooltip } from "@heroui/react";
 import { FaCheck, FaCircleInfo } from "react-icons/fa6";
 import { TiLockClosed, TiLockOpen } from "react-icons/ti";
-import { Tooltip } from "@heroui/react";
 import type { TreeMenuItem } from "../ConfigSetting/TreeMenu";
 
 import TreeMenu from "../ConfigSetting/TreeMenu";
@@ -84,145 +84,148 @@ function distributeNumQuestionsRecursively(
 }
 
 const QuestionSettings = ({ maxNumQuestions = 100 }) => {
-  const initialCourseData = [
-    {
-      id: "toeic",
-      label: "TOEIC",
-      numQuestion: 50,
-      isLocked: false,
-      isChecked: true,
-      children: [
-        {
-          id: "listening",
-          label: "Listening",
-          numQuestion: 25,
-          isLocked: false,
-          isChecked: true,
-          children: [
-            {
-              id: "part-conversations",
-              label: "Part : Conversations",
-              numQuestion: 25,
-              isLocked: false,
-              isChecked: true,
-              children: [
-                {
-                  id: "topic-office-communication",
-                  label: "Topic : Office communication",
-                  numQuestion: 25,
-                  isLocked: false,
-                  isChecked: true,
-                  children: [
-                    {
-                      id: "context-meeting-rescheduling",
-                      label: "Context : Meeting rescheduling",
-                      numQuestion: 10,
-                      isLocked: true,
-                      isChecked: true,
-                    },
-                    {
-                      id: "question-types-inference",
-                      label:
-                        "Question types : What is the man's problem ? ( inference )",
-                      numQuestion: 40,
-                      isLocked: false,
-                      isChecked: true,
-                      hasRedBadge: true,
-                      redBadgeValue: "4 0",
-                    },
-                    {
-                      id: "question-types-prediction",
-                      label:
-                        "Question types : What will the woman likely do next ? ( prediction )",
-                      numQuestion: 8,
-                      isLocked: false,
-                      isChecked: true,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              id: "part-short-talks",
-              label: "Part : Short Talks .",
-              numQuestion: 25,
-              isLocked: false,
-              isChecked: true,
-            },
-          ],
-        },
-        {
-          id: "reading",
-          label: "Reading",
-          numQuestion: 50,
-          isLocked: false,
-          isChecked: true,
-          children: [
-            {
-              id: "part-reading-comprehension",
-              label: "Part : Reading Comprehension",
-              numQuestion: 50,
-              isLocked: false,
-              isChecked: true,
-              children: [
-                {
-                  id: "emails",
-                  label: "Emails",
-                  numQuestion: 25,
-                  isLocked: false,
-                  isChecked: true,
-                },
-                {
-                  id: "topic-advertisements",
-                  label: "Topic : Advertisements",
-                  numQuestion: 25,
-                  isLocked: false,
-                  isChecked: true,
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: "grammar-toeic",
-          label: "Grammar",
-          numQuestion: null,
-          isLocked: false,
-          isChecked: true,
-        },
-      ],
-    },
-    {
-      id: "ielts",
-      label: "IELTS",
-      numQuestion: null,
-      isLocked: false,
-      isChecked: true,
-      children: [
-        {
-          id: "listening-ielts",
-          label: "Listening",
-          numQuestion: null,
-          isLocked: false,
-          isChecked: true,
-        },
-        {
-          id: "reading-ielts",
-          label: "Reading",
-          numQuestion: null,
-          isLocked: false,
-          isChecked: true,
-        },
-        {
-          id: "grammar-ielts",
-          label: "Grammar",
-          numQuestion: null,
-          isLocked: false,
-          isChecked: true,
-        },
-      ],
-    },
-  ];
+  const initialCourseData = useMemo(
+    () => [
+      {
+        id: "toeic",
+        label: "TOEIC",
+        numQuestion: 50,
+        isLocked: false,
+        isChecked: true,
+        children: [
+          {
+            id: "listening",
+            label: "Listening",
+            numQuestion: 25,
+            isLocked: false,
+            isChecked: true,
+            children: [
+              {
+                id: "part-conversations",
+                label: "Part : Conversations",
+                numQuestion: 25,
+                isLocked: false,
+                isChecked: true,
+                children: [
+                  {
+                    id: "topic-office-communication",
+                    label: "Topic : Office communication",
+                    numQuestion: 25,
+                    isLocked: false,
+                    isChecked: true,
+                    children: [
+                      {
+                        id: "context-meeting-rescheduling",
+                        label: "Context : Meeting rescheduling",
+                        numQuestion: 10,
+                        isLocked: true,
+                        isChecked: true,
+                      },
+                      {
+                        id: "question-types-inference",
+                        label:
+                          "Question types : What is the man's problem ? ( inference )",
+                        numQuestion: 40,
+                        isLocked: false,
+                        isChecked: true,
+                        hasRedBadge: true,
+                        redBadgeValue: "4 0",
+                      },
+                      {
+                        id: "question-types-prediction",
+                        label:
+                          "Question types : What will the woman likely do next ? ( prediction )",
+                        numQuestion: 8,
+                        isLocked: false,
+                        isChecked: true,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                id: "part-short-talks",
+                label: "Part : Short Talks .",
+                numQuestion: 25,
+                isLocked: false,
+                isChecked: true,
+              },
+            ],
+          },
+          {
+            id: "reading",
+            label: "Reading",
+            numQuestion: 50,
+            isLocked: false,
+            isChecked: true,
+            children: [
+              {
+                id: "part-reading-comprehension",
+                label: "Part : Reading Comprehension",
+                numQuestion: 50,
+                isLocked: false,
+                isChecked: true,
+                children: [
+                  {
+                    id: "emails",
+                    label: "Emails",
+                    numQuestion: 25,
+                    isLocked: false,
+                    isChecked: true,
+                  },
+                  {
+                    id: "topic-advertisements",
+                    label: "Topic : Advertisements",
+                    numQuestion: 25,
+                    isLocked: false,
+                    isChecked: true,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: "grammar-toeic",
+            label: "Grammar",
+            numQuestion: null,
+            isLocked: false,
+            isChecked: true,
+          },
+        ],
+      },
+      {
+        id: "ielts",
+        label: "IELTS",
+        numQuestion: null,
+        isLocked: false,
+        isChecked: true,
+        children: [
+          {
+            id: "listening-ielts",
+            label: "Listening",
+            numQuestion: null,
+            isLocked: false,
+            isChecked: true,
+          },
+          {
+            id: "reading-ielts",
+            label: "Reading",
+            numQuestion: null,
+            isLocked: false,
+            isChecked: true,
+          },
+          {
+            id: "grammar-ielts",
+            label: "Grammar",
+            numQuestion: null,
+            isLocked: false,
+            isChecked: true,
+          },
+        ],
+      },
+    ],
+    []
+  );
 
   const [courseData, setCourseData] = useState<TreeMenuItem[]>([]);
   const [warningNodeIds, setWarningNodeIds] = useState<string[]>([]);
@@ -234,7 +237,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
       maxNumQuestions
     );
     setCourseData(allocatedData);
-  }, [maxNumQuestions]);
+  }, [maxNumQuestions, initialCourseData]);
 
   const updateItemForChildren = (
     children: TreeMenuItem[],
@@ -533,7 +536,7 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
 
     return (
       <div
-        className={`relative flex items-center py-3 gap-4 pr-10 cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
+        className={`relative  flex items-center py-3 gap-4 pr-10 cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
           level === 0 ? "bg-gray-50 border-b" : ""
         }`}
         style={{ paddingLeft: `${level * 1.5 + 1}rem` }}
@@ -703,8 +706,8 @@ const QuestionSettings = ({ maxNumQuestions = 100 }) => {
   };
 
   return (
-    <div className="font-inter flex justify-center items-start">
-      <div className="w-full bg-white rounded-lg shadow-xl overflow-hidden">
+    <div className=" flex justify-center items-start ">
+      <div className="w-full bg-white rounded-lg shadow-xl ">
         <TreeMenu
           data={courseData}
           onItemChange={handleItemChange}
